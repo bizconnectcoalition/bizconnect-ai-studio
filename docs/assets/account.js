@@ -6,6 +6,7 @@
   BCAI.footer();
   BCAI.allie();
   const money = (c) => `$${(c / 100).toFixed(2)}`;
+  const mask = (e) => { const [a, d] = String(e).split("@"); return d ? `${a.slice(0, 2)}•••@${d}` : ""; };
 
   async function load() {
     const [me, cat, hist] = await Promise.all([BCAI.refreshMe(), BCAI.loadCatalog(), BCAI.api("/api/history")]);
@@ -16,8 +17,8 @@
     $("#st-earn").textContent = money(u.earningsCents || 0);
     $("#share-pct").textContent = `${Math.round(cat.refShare * 100)}%`;
     const base = location.href.replace(/account\.html.*$/, "index.html");
-    $("#reflink").value = `${base}?ref=${u.handle}`;
-    $("#refrows").innerHTML = me.referrals.map((r) => `<tr><td>@${esc(r.handle)}</td><td>${new Date(r.joined).toLocaleDateString()}</td><td>${money(r.purchasedCents || 0)}</td><td style="color:var(--gold-hi)">${money(Math.round((r.purchasedCents || 0) * cat.refShare))}</td></tr>`).join("");
+    $("#reflink").value = `${base}?ref=${u.refCode || ""}`;
+    $("#refrows").innerHTML = me.referrals.map((r) => `<tr><td>${esc(r.name || "Member")} <span class="muted">${esc(mask(r.handle))}</span></td><td>${new Date(r.joined).toLocaleDateString()}</td><td>${money(r.purchasedCents || 0)}</td><td style="color:var(--gold-hi)">${money(Math.round((r.purchasedCents || 0) * cat.refShare))}</td></tr>`).join("");
     $("#ref-empty").classList.toggle("hidden", me.referrals.length > 0);
 
     const rows = [];

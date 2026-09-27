@@ -319,6 +319,54 @@ function normalizeQueued(outType, result, meta) {
 // ---------- users, wallet, history ----------
 async function getUser(env, handle) { return kvGet(env, `user:${handle}`); }
 async function saveUser(env, u) { return kvPut(env, `user:${u.handle}`, u); }
+async function newRefCode(env, handle) {
+  for (let i = 0; i < 8; i++) {
+    const code = [...crypto.getRandomValues(new Uint8Array(6))].map((b) => "abcdefghjkmnpqrstuvwxyz23456789"[b % 31]).join("");
+    if (!(await env.STUDIO_KV.get(`refcode:${code}`))) {
+      await env.STUDIO_KV.put(`refcode:${code}`, handle);
+      return code;
+    }
+  }
+  return null;
+}
+
+// Record every sign-in: a rolling log in KV (backup) and, when configured, a row in the Google Sheet.
+async function logLogin(env, req, u, event) {
+  const row = {
+    token: env.SHEET_TOKEN || "",
+    time: new Date().toISOString(),
+    event,
+    email: u.handle,
+    name: u.name,
+    referredBy: u.ref || "",
+    refCode: u.refCode || "",
+    credits: u.credits,
+    logins: u.logins,
+    country: req.cf?.country || "",
+    city: req.cf?.city || "",
+    device: (req.headers.get("User-Agent") || "").slice(0, 160),
+  };
+  try {
+    const log = await kvGet(env, "log:logins", []);
+    const { token, ...safe } = row;
+    log.unshift(safe);
+    await kvPut(env, "log:logins", log.slice(0, 2000));
+  } catch {}
+  const hook = (env.SHEET_WEBHOOK_URL || "").trim();
+  if (hook) {
+    let result;
+    try {
+      // Apps Script answers a POST with a redirect to the result page; follow it manually with GET.
+      let r = await fetch(hook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(row), redirect: "manual" });
+      if (r.status >= 300 && r.status < 400 && r.headers.get("Location")) r = await fetch(r.headers.get("Location"));
+      result = { status: r.status, body: (await r.text()).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200) };
+    } catch (e) {
+      result = { error: String(e.message || e).slice(0, 200) };
+    }
+    await kvPut(env, "log:sheet-last", { at: row.time, email: row.email, ...result });
+  }
+}
+
 async function addHistory(env, handle, item) {
   const k = `hist:${handle}`;
   const list = await kvGet(env, k, []);
@@ -327,7 +375,7 @@ async function addHistory(env, handle, item) {
 }
 
 // ---------- routes ----------
-async function route(req, env, url) {
+async function route(req, env, url, ctx) {
   const p = url.pathname;
   const method = req.method;
 
@@ -354,21 +402,37 @@ async function route(req, env, url) {
 
   if (p === "/api/login" && method === "POST") {
     const b = await req.json().catch(() => ({}));
-    if (!env.STUDIO_PASSCODE || String(b.passcode || "") !== env.STUDIO_PASSCODE) return fail(401, "That passcode isn't right.");
-    const handle = String(b.handle || "").toLowerCase().trim().replace(/[^a-z0-9_-]/g, "").slice(0, 24);
-    if (handle.length < 3) return fail(400, "Pick a username with at least 3 letters or numbers.");
+    const pass = (env.STUDIO_PASSCODE || "").trim();
+    if (!pass || String(b.passcode || "").trim() !== pass) return fail(401, "That passcode isn't right.");
+    // The member's email is their account id.
+    // Legacy username sign-in (older cached pages) is still accepted during the switch to email.
+    const legacy = !b.email && b.handle ? String(b.handle).toLowerCase().trim().replace(/[^a-z0-9_-]/g, "").slice(0, 24) : "";
+    const handle = legacy || String(b.email || "").toLowerCase().trim().slice(0, 120);
+    if (!legacy && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(handle)) return fail(400, "Please enter a valid email address.");
+    if (legacy && legacy.length < 3) return fail(400, "Please enter a valid email address.");
+    const name = String(b.name || "").trim().slice(0, 60);
+    if (name.length < 2) return fail(400, "Please enter your name.");
     let u = await getUser(env, handle);
+    let event = "login";
     if (!u) {
-      const ref = String(b.ref || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 24);
-      const refUser = ref && ref !== handle ? await getUser(env, ref) : null;
-      u = { handle, name: String(b.name || handle).slice(0, 60), credits: cfg(env).starter, created: Date.now(), ref: refUser ? ref : null, earningsCents: 0, purchasedCents: 0, spentCredits: 0 };
-      await saveUser(env, u);
+      event = "signup";
+      // Referral links carry a short code, never the referrer's email.
+      const code = String(b.ref || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+      const refEmail = code ? await env.STUDIO_KV.get(`refcode:${code}`) : null;
+      const refUser = refEmail && refEmail !== handle ? await getUser(env, refEmail) : null;
+      u = { handle, name, credits: cfg(env).starter, created: Date.now(), ref: refUser ? refEmail : null, earningsCents: 0, purchasedCents: 0, spentCredits: 0 };
       if (refUser) {
-        const refs = await kvGet(env, `refs:${ref}`, []);
-        refs.unshift({ handle, joined: Date.now(), purchasedCents: 0 });
-        await kvPut(env, `refs:${ref}`, refs.slice(0, 500));
+        const refs = await kvGet(env, `refs:${refEmail}`, []);
+        refs.unshift({ handle, name, joined: Date.now(), purchasedCents: 0 });
+        await kvPut(env, `refs:${refEmail}`, refs.slice(0, 500));
       }
     }
+    if (name && u.name !== name) u.name = name;
+    if (!u.refCode) u.refCode = await newRefCode(env, handle);
+    u.logins = (u.logins || 0) + 1;
+    u.lastLogin = Date.now();
+    await saveUser(env, u);
+    ctx.waitUntil(logLogin(env, req, u, event));
     return json({ token: await makeToken(env, handle), user: u });
   }
 
@@ -531,11 +595,11 @@ async function route(req, env, url) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     const url = new URL(req.url);
     try {
-      return await route(req, env, url);
+      return await route(req, env, url, ctx);
     } catch (e) {
       return fail(500, "Server error: " + (e.message || String(e)).slice(0, 200));
     }

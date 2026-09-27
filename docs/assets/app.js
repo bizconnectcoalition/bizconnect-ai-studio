@@ -257,13 +257,13 @@
       <h2>Welcome to the Studio</h2>
       <p>BizConnect AI Studio is in private preview. Enter the access passcode to start creating.</p>
       <div class="stack">
-        <div class="field"><label for="g-name">Your name</label><input class="input" id="g-name" placeholder="Dan Herlehy" required></div>
-        <div class="field"><label for="g-handle">Username</label><input class="input" id="g-handle" placeholder="danh" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_\\-]+"></div>
+        <div class="field"><label for="g-name">Your name</label><input class="input" id="g-name" placeholder="Jane Smith" autocomplete="name" required></div>
+        <div class="field"><label for="g-email">Email</label><input class="input" id="g-email" type="email" placeholder="you@yourbusiness.com" autocomplete="email" required></div>
         <div class="field"><label for="g-pass">Access passcode</label><input class="input" id="g-pass" type="password" required></div>
-        ${r ? `<p class="notice">Invited by <b style="color:var(--gold-hi)">@${esc(r)}</b></p>` : ""}
+        ${r ? `<p class="notice">You were invited by a BizConnect member. Welcome!</p>` : ""}
         <div class="err hidden" id="g-err"></div>
         <button class="btn btn-primary" type="submit">Enter the Studio</button>
-        <p class="muted" style="font-size:12px;text-align:center">New accounts start with free credits. Returning? Use the same username.</p>
+        <p class="muted" style="font-size:12px;text-align:center">New accounts start with free credits. Returning? Sign in with the same email.</p>
       </div></form>`;
     document.body.appendChild(ov);
     const form = $("form", ov);
@@ -271,7 +271,7 @@
       e.preventDefault();
       const btn = $("button", form); btn.disabled = true; btn.textContent = "Checking…";
       try {
-        const d = await api("/api/login", { name: $("#g-name").value.trim(), handle: $("#g-handle").value.trim(), passcode: $("#g-pass").value, ref: store.get(LS.ref) });
+        const d = await api("/api/login", { name: $("#g-name").value.trim(), email: $("#g-email").value.trim(), passcode: $("#g-pass").value, ref: store.get(LS.ref) });
         store.set(LS.token, d.token); setUser(d.user); ov.remove();
         document.dispatchEvent(new CustomEvent("bcai:signedin"));
       } catch (err) {
