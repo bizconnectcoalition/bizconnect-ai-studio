@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet &amp; Referrals — BizConnect AI Studio</title>
+<link rel="icon" href="assets/img/bcc-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="studio-head"><div><div class="crumbs"><a href="index.html">Studios</a> / Wallet &amp; Referrals</div><h1 id="hello">Your wallet</h1><p class="muted">Credits, referrals and everything you've created.</p></div></div>
+
+  <div class="stats">
+    <div class="stat"><span>Credit balance</span><b data-credits>—</b></div>
+    <div class="stat"><span>Credits used</span><b id="st-used">—</b></div>
+    <div class="stat"><span>People referred</span><b id="st-refs">—</b></div>
+    <div class="stat"><span>Referral earnings</span><b id="st-earn">—</b></div>
+  </div>
+
+  <div class="section-head" id="topup"><div><span class="eyebrow">Top up</span><h2 style="margin-top:8px">Add credits</h2></div><p class="muted" style="font-size:14px">1 credit = $0.01. Credits never expire and work in every studio. There's no subscription.</p></div>
+  <div class="packs">
+    <div class="pack"><span class="label">Starter</span><h3>$10</h3><p>1,000 credits</p><button class="btn btn-ghost" data-pack="starter">Add credits</button></div>
+    <div class="pack" style="border-color:var(--gold)"><span class="label" style="color:var(--gold-hi)">Most popular</span><h3>$25</h3><p>2,750 credits (10% bonus)</p><button class="btn btn-primary" data-pack="pro">Add credits</button></div>
+    <div class="pack"><span class="label">Studio</span><h3>$50</h3><p>6,000 credits (20% bonus)</p><button class="btn btn-ghost" data-pack="studio">Add credits</button></div>
+  </div>
+  <p class="notice" style="margin-top:12px">Preview mode: these buttons add demo credits so the wallet and referral payouts can be tested. No card is charged. A real checkout (e.g. Stripe) would plug in here.</p>
+
+  <div class="section-head"><div><span class="eyebrow">Referrals</span><h2 style="margin-top:8px">Share the studio, earn <span id="share-pct">10%</span></h2></div><p class="muted" style="font-size:14px;max-width:460px">When someone signs up with your link, you earn a share of every credit pack they buy. You're paid on real purchases only: no pay-to-join, no fees to qualify.</p></div>
+  <div class="panel stack">
+    <div class="field"><label>Your referral link</label><div class="copybox"><input class="input" id="reflink" readonly><button class="btn btn-primary" id="copyref">Copy link</button></div></div>
+    <table class="t"><thead><tr><th>Member</th><th>Joined</th><th>Purchases</th><th>Your earnings</th></tr></thead><tbody id="refrows"></tbody></table>
+    <p class="muted hidden" id="ref-empty" style="font-size:14px">No referrals yet. Share your link with your chapter!</p>
+  </div>
+
+  <div class="section-head"><div><span class="eyebrow">Transparent pricing</span><h2 style="margin-top:8px">What things cost</h2></div></div>
+  <div class="panel"><table class="t"><thead><tr><th>Studio</th><th>Engine</th><th>Price</th><th>≈ Dollars</th></tr></thead><tbody id="prices"></tbody></table></div>
+
+  <div class="section-head" id="history"><div><span class="eyebrow">Library</span><h2 style="margin-top:8px">Everything you've created</h2></div></div>
+  <div class="history" id="all"></div>
+  <p class="muted hidden" id="all-empty" style="font-size:14px">Nothing yet. Pick a studio to get started.</p>
+</main>
+<script src="assets/studios.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/account.js"></script>
+</body>
+</html>

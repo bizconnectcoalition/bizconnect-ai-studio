@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio — BizConnect AI Studio</title>
+<link rel="icon" href="assets/img/bcc-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="studio-head">
+    <div>
+      <div class="crumbs"><a href="index.html">Studios</a> / <span id="crumb"></span></div>
+      <div class="t"><span class="ico" id="s-ico"></span><div><h1 id="s-name"></h1><p class="muted" id="s-tag"></p></div></div>
+    </div>
+    <div class="seg" id="switcher" aria-label="Switch studio"></div>
+  </div>
+  <div class="studio-grid">
+    <aside>
+      <form class="panel stack" id="create">
+        <h4>1 · Describe it</h4>
+        <div class="field" id="prompt-field"></div>
+        <div>
+          <span class="label">Try an example</span>
+          <div class="chips" id="examples"></div>
+        </div>
+      </form>
+      <div class="panel stack">
+        <h4>2 · Choose your options</h4>
+        <div id="controls" class="stack"></div>
+        <div class="cost-line"><span>Estimated cost</span><span><b id="cost">…</b> <span class="muted" id="cost-usd"></span></span></div>
+        <button class="btn btn-primary" id="go" form="create" type="submit">Create</button>
+        <p class="muted" style="font-size:12px">You're only charged for finished results. If a render fails, your credits are refunded automatically.</p>
+      </div>
+    </aside>
+    <section>
+      <div class="panel stage" id="stage">
+        <div class="stage-empty" id="empty"><div><div class="ico" id="empty-ico"></div><p id="empty-msg">Your creation will appear here.</p></div></div>
+      </div>
+      <div class="panel" id="hist-panel">
+        <h4>Your history</h4>
+        <div class="history" id="history"></div>
+        <p class="muted hidden" id="hist-empty" style="font-size:14px">Nothing here yet. Everything you create in this studio is saved here.</p>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="assets/studios.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/controls.js"></script>
+<script src="assets/studio-page.js"></script>
+</body>
+</html>

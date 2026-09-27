@@ -1,0 +1,23 @@
+name = "bizconnect-ai-studio"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Public files the Worker serves directly (e.g. the default Allie presenter photo
+# that fal.ai downloads when making talking-avatar videos).
+[assets]
+directory = "./public"
+
+# Wallets, referrals, generation history, job tracking, daily spend counter.
+[[kv_namespaces]]
+binding = "STUDIO_KV"
+id = "82bc4c36ea414411b3703a0d14fdc34a"
+
+[vars]
+DAILY_CAP_USD = "5"     # max fal.ai spend per day across all users
+MARKUP = "3"            # price = fal.ai cost x MARKUP
+STARTER_CREDITS = "500" # 1 credit = $0.01 retail
+REF_SHARE = "0.10"      # referrer earns 10% of what their referrals buy
+
+# Secrets (set with `npx wrangler secret put <NAME>`, never stored in this file):
+#   FAL_KEY         - fal.ai API key
+#   STUDIO_PASSCODE - passcode testers type into the studio

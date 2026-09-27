@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BizConnect AI Studio — Every AI tool, one simple place</title>
+<meta name="description" content="Create images, videos, voiceovers, talking avatars, music, slide decks and more with the world's leading AI models, in one simple studio by Biz Connect Coalition.">
+<link rel="icon" href="assets/img/bcc-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <section class="hero wrap">
+    <span class="eyebrow">Biz Connect Coalition · AI Studio</span>
+    <h1>Every AI tool your business needs.<br><em>One simple studio.</em></h1>
+    <p class="lead">No need to learn ChatGPT, Claude, Gemini or ElevenLabs separately. Pick what you want to make, describe it in plain English, and the studio handles the rest.</p>
+    <form class="ask-bar" id="ask">
+      <input id="ask-in" placeholder="What do you want to make? e.g. “a flyer for my open house on Saturday”" maxlength="300" aria-label="What do you want to make?">
+      <button class="btn btn-primary" type="submit">Ask Allie</button>
+    </form>
+    <div class="hero-meta">
+      <div><b>10</b> creative studios</div>
+      <div><b>20+</b> leading AI models</div>
+      <div>Pay only for <b>what you create</b></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div><span class="eyebrow">Choose a studio</span><h2 style="margin-top:8px">What would you like to create?</h2></div>
+      <p class="muted" style="font-size:14px;max-width:420px">Click any card to try it right here, or open the full studio for more engines, options and your history.</p>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap" id="recent-wrap" style="margin-top:40px">
+    <div class="section-head"><div><span class="eyebrow">Your library</span><h2 style="margin-top:8px">Recent creations</h2></div><a class="linkish" href="account.html#history">View all →</a></div>
+    <div class="history" id="recent"></div>
+    <p class="muted hidden" id="recent-empty" style="font-size:14px">Nothing yet. Your images, videos, voiceovers and documents will appear here.</p>
+  </section>
+</main>
+<script src="assets/studios.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/controls.js"></script>
+<script src="assets/home.js"></script>
+</body>
+</html>

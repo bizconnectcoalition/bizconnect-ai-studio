@@ -1,0 +1,8 @@
+# secrets / local config — never commit
+.dev.vars
+.env
+*.key
+**/.wrangler/
+node_modules/
+.DS_Store
+Thumbs.db
