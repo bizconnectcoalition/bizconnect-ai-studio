@@ -260,7 +260,7 @@
     el.addEventListener("focus", warm, { passive: true });
     wrap.appendChild(pill);
     wrap.appendChild(btn);
-    if (el.tagName === "TEXTAREA" || el.id === "ask-in" || el.name === "p") hint(wrap);
+    if (el.tagName === "TEXTAREA" || el.name === "p") hint(wrap);
   }
   function scan(root) { (root.querySelectorAll ? root : document).querySelectorAll("textarea, input").forEach(attach); }
   const mo = new MutationObserver((muts) => { for (const m of muts) m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.("textarea, input") ? attach(n) : scan(n))); });

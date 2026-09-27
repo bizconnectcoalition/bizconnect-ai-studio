@@ -303,7 +303,7 @@
   function allie() {
     const page = location.pathname.split("/").pop() || "index.html";
     const cfg = ALLIE_PAGE[page] || ALLIE_PAGE["index.html"];
-    const POSE_CYCLE_MS = 22000, APPEAR_MS = 5000, BUBBLE_MS = 9000;
+    const POSE_CYCLE_MS = 22000, APPEAR_MS = 4000, BUBBLE_MS = 9000;
     let poseIx = cfg.pose, lineIx = 0, frontIsA = true, bubbleTimer = null;
     const hidden = () => { try { return sessionStorage.getItem("allieHidden") === "1"; } catch { return false; } };
 
@@ -361,7 +361,7 @@
       try { sessionStorage.setItem("allieHidden", "1"); } catch {}
       setTimeout(() => tab.classList.add("show"), 450);
     }
-    if (hidden()) tab.classList.add("show"); else setTimeout(() => show(true), APPEAR_MS);
+    if (hidden()) setTimeout(() => tab.classList.add("show"), APPEAR_MS); else setTimeout(() => show(true), APPEAR_MS);
     setInterval(() => {
       if (!root.classList.contains("in")) return;
       nextPose();

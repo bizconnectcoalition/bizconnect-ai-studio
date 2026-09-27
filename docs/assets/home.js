@@ -104,14 +104,6 @@
     } catch {}
   }
 
-  $("#ask").onsubmit = (e) => {
-    e.preventDefault();
-    const v = $("#ask-in").value.trim();
-    if (!v) return;
-    BCAI.askAllie(v);
-    $("#ask-in").value = "";
-  };
-
   drawCards();
   BCAI.whenSignedIn(async () => {
     await BCAI.loadCatalog();
