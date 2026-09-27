@@ -346,6 +346,60 @@ footer.bot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:w
 }
 @media (max-width:420px){.cards{grid-template-columns:1fr}.card{min-height:0}}
 
+/* ---------- copy / download / share tools on every result ---------- */
+.out-meta .actions{display:flex;gap:8px;flex-wrap:wrap}
+.tool{display:inline-flex;align-items:center;gap:7px;font:600 13.5px var(--sans);color:var(--ivory);background:rgba(247,246,242,.05);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer;transition:background .2s,border-color .2s,color .2s;min-height:40px;white-space:nowrap}
+.tool svg{width:16px;height:16px;flex:none}
+.tool:hover{border-color:var(--gold-hi);background:rgba(198,151,47,.12)}
+.tool:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+.tool.primary{background:linear-gradient(135deg,var(--gold-hi),var(--gold) 60%,var(--gold-deep));color:var(--navy-950);border-color:transparent}
+.tool.primary:hover{filter:brightness(1.06)}
+.tool.ok,.tool.primary.ok{background:rgba(95,185,138,.18);border-color:var(--green);color:#BFF0D4}
+.tool-sm{padding:6px 11px;min-height:34px;font-size:12.5px}
+.tool-sm svg{width:14px;height:14px}
+.result-tools{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.result-tools .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.tools-note{font-size:12.5px;margin-top:8px}
+.tools-note:empty{display:none}
+.tool.warn{background:rgba(230,161,0,.14);border-color:#E6A100;color:#FFD98A}
+.usein{position:relative}
+.usein summary{list-style:none}
+.usein summary::-webkit-details-marker{display:none}
+.usein[open] summary{border-color:var(--gold-hi);background:rgba(198,151,47,.12)}
+.usein-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:20;min-width:280px;background:var(--navy-800);border:1px solid var(--gold);border-radius:10px;box-shadow:var(--shadow-md);padding:6px;display:flex;flex-direction:column}
+.usein-menu a{padding:10px 12px;border-radius:7px;font-size:14px;color:var(--ivory-dim)}
+.usein-menu a:hover,.usein-menu a:focus-visible{background:rgba(198,151,47,.14);color:var(--gold-hi)}
+.caption-card{margin-top:14px}
+.caption-card .sect-body{padding:14px 16px}
+.cap-text{font-size:15px;line-height:1.55;color:var(--ivory)}
+.cap-tags{margin-top:6px;color:var(--gold-hi);font-size:14px}
+.caption-card .img-tools{padding:10px 0 0}
+.slide h5{padding-right:78px}
+.sects{display:flex;flex-direction:column;gap:12px}
+.sect{background:rgba(7,14,29,.6);border:1px solid var(--line-soft);border-radius:12px;overflow:hidden}
+.sect-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line-soft);background:rgba(198,151,47,.06)}
+.sect-head h4{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi)}
+.sect-body.out-text{border:none;border-radius:0;background:none;padding:14px 16px}
+.img-card{margin:0;border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;background:rgba(7,14,29,.6)}
+.img-card img{border:none!important;border-radius:0!important}
+.img-tools{display:flex;gap:6px;flex-wrap:wrap;padding:8px}
+.logo-tools{padding:8px 0 0}
+.slide{position:relative}
+.slide-copy{position:absolute;top:8px;right:8px;opacity:.85}
+.slide:hover .slide-copy{opacity:1}
+.kit .kv{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.kit .kv:last-child{border-bottom:none}
+.kit .kv p{margin-top:3px;color:var(--ivory)}
+.kit .kv p.big{font-family:var(--serif);font-size:24px}
+.kit .kv .tool{flex:none}
+button.sw{padding:0;background:none;cursor:pointer;color:var(--ivory);text-align:left;transition:transform .2s,border-color .2s}
+button.sw:hover{transform:translateY(-2px);border-color:var(--gold)}
+button.sw.ok{border-color:var(--green)}
+button.sw.ok span{color:#BFF0D4}
+.msg.ai{position:relative;padding-bottom:10px}
+.msg-tools{display:flex;justify-content:flex-end;margin-top:8px}
+@media (max-width:720px){.out-meta{flex-direction:column;align-items:flex-start}.tool{min-height:44px}.tool-sm{min-height:40px}}
+
 /* ---------- voice input (mic on every text box) ---------- */
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .mic-wrap{position:relative;display:block;min-width:0;width:100%}

@@ -133,21 +133,184 @@
   }
   async function upload(file) { return (await api("/api/upload", { dataUrl: await toDataUrl(file) })).url; }
 
-  // ---------------- output rendering ----------------
+  // ---------------- output rendering: every result gets simple Copy / Save / Share tools ----------------
   function md(text) {
     let h = esc(text);
     h = h.replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>");
     h = h.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*(?!\s)(.+?)\*/g, "$1<i>$2</i>");
     return h;
   }
-  function download(url, name) {
-    fetch(url).then((r) => r.blob()).then((b) => {
-      const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }).catch(() => window.open(url, "_blank"));
+  // Clean text for pasting into emails, posts and documents: no markdown symbols (hashtags are kept).
+  function plain(text) {
+    return String(text || "")
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1 ($2)")
+      .replace(/^\s*([-*_])\1{2,}\s*$/gm, "")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1")
+      .replace(/(^|[^*\w])\*(?!\s)(.+?)\*/g, "$1$2").replace(/(^|\W)_(?!\s)(.+?)_(?=\W|$)/g, "$1$2")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/^(\s*)[-*+]\s+/gm, "$1• ")
+      .replace(/\n{3,}/g, "\n\n").trim();
   }
-  function copyText(t, btn) {
-    navigator.clipboard.writeText(t).then(() => { if (btn) { const o = btn.textContent; btn.textContent = "Copied ✓"; setTimeout(() => (btn.textContent = o), 1500); } });
+  const ICO = {
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
+    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v6M9.5 11.5 12 14l2.5-2.5M11 18h2"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+    wand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 20 11-11M14 4v3M18 8h3M17 3l-1.5 1.5M19.5 5.5 21 4"/></svg>',
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+  };
+  const TOUCH = window.matchMedia?.("(pointer:coarse)").matches;
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const SHARE_FILES = (() => { try { return !!(navigator.share && navigator.canShare && navigator.canShare({ files: [new File(["x"], "x.txt", { type: "text/plain" })] })); } catch { return false; } })();
+  const PHONE_SAVE = SHARE_FILES && TOUCH; // phones/tablets: "Save to phone" opens the share sheet (→ Save Image / Save Video)
+  const COPIED = "Copied! Now paste it anywhere";
+  const liveRegion = document.createElement("div");
+  liveRegion.className = "sr-only"; liveRegion.setAttribute("aria-live", "polite");
+  document.body.appendChild(liveRegion);
+  function announce(msg) { liveRegion.textContent = ""; setTimeout(() => (liveRegion.textContent = msg), 30); }
+
+  function flash(btn, label, ok = true) {
+    announce(label);
+    if (!btn) return;
+    clearTimeout(btn._t);
+    if (btn.classList.contains("tool")) {
+      if (!btn._orig) btn._orig = btn.innerHTML;
+      btn.classList.toggle("ok", ok); btn.classList.toggle("warn", !ok);
+      btn.innerHTML = `${ok ? ICO.ok : ""}<span>${esc(label)}</span>`;
+      btn._t = setTimeout(() => { btn.classList.remove("ok", "warn"); btn.innerHTML = btn._orig; }, 3000);
+    } else if (btn.classList.contains("sw")) {
+      if (ok) { btn.classList.add("ok"); btn._t = setTimeout(() => btn.classList.remove("ok"), 3000); }
+    } else if (btn.tagName === "BUTTON") {
+      if (btn._origText == null) btn._origText = btn.textContent;
+      btn.textContent = ok ? `✓ ${label}` : label;
+      btn._t = setTimeout(() => (btn.textContent = btn._origText), 3000);
+    }
+  }
+  async function writeClipboard(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch {}
+    try { // fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = t; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
+    } catch { return false; }
+  }
+  // Copy text. If the browser refuses, select the text on screen so Ctrl/Cmd+C still works.
+  async function copyText(t, btn, label = COPIED, selectEl) {
+    const ok = await writeClipboard(t);
+    if (ok) return flash(btn, label, true);
+    if (selectEl) { const r = document.createRange(); r.selectNodeContents(selectEl); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    flash(btn, /Mac|iP/.test(navigator.platform) ? "Text selected: press Cmd+C" : "Text selected: press Ctrl+C", false);
+  }
+  async function copyImage(url, btn) {
+    try {
+      if (!window.ClipboardItem || !navigator.clipboard?.write) throw new Error("no image clipboard");
+      const png = fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.blob(); }).then((b) => b.type === "image/png" ? b : new Promise((res, rej) => {
+        const img = new Image(); const src = URL.createObjectURL(b);
+        img.onload = () => { const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext("2d").drawImage(img, 0, 0); URL.revokeObjectURL(src); c.toBlob((x) => (x ? res(x) : rej(new Error())), "image/png"); };
+        img.onerror = () => { URL.revokeObjectURL(src); rej(new Error()); };
+        img.src = src;
+      }));
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
+      flash(btn, "Picture copied! Paste it anywhere");
+    } catch {
+      flash(btn, PHONE_SAVE ? "Can't copy pictures here. Use Save" : "Couldn't copy the picture. Use Download", false);
+    }
+  }
+  const extFor = (type, fallback) => ({ "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "video/mp4": "mp4", "audio/wav": "wav", "audio/x-wav": "wav", "audio/mpeg": "mp3", "audio/mp4": "m4a" }[type] || fallback);
+  function download(url, name, btn) {
+    flash(btn, "Downloading…");
+    fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.blob(); }).then((b) => {
+      const n = name.replace(/\.\w+$/, "") + "." + extFor(b.type, (name.match(/\.(\w+)$/) || [, "bin"])[1]);
+      const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = n; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }).catch(() => {
+      const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+      flash(btn, TOUCH ? "Opened: long-press it to save" : "Opened: right-click it to save", false);
+    });
+  }
+  // Pre-fetch files so "Save to phone" / "Share" can open the share sheet instantly (Safari needs that).
+  const fileCache = new Map();
+  function prepFile(url, name, type) {
+    if (!fileCache.has(url)) {
+      const p = fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.blob(); })
+        .then((b) => new File([b], name.replace(/\.\w+$/, "") + "." + extFor(b.type, name.split(".").pop()), { type: b.type || type }))
+        .then((f) => (p.file = f)).catch(() => null);
+      fileCache.set(url, p);
+    }
+    return fileCache.get(url);
+  }
+  function shareFiles(urls, names, type, btn) {
+    const ps = urls.map((u, i) => prepFile(u, names[i], type));
+    const ready = ps.map((p) => p.file).filter(Boolean);
+    const go = (files) => navigator.share({ files }).catch((e) => { if (e && e.name !== "AbortError") flash(btn, "Couldn't share. Try again", false); });
+    if (ready.length === urls.length) return go(ready); // instant: still inside the tap
+    flash(btn, "Getting it ready… tap again");
+    Promise.all(ps).catch(() => {});
+  }
+  // Save text as a real Word document (.docx) that Word and Google Docs both open.
+  let docxLib = null;
+  async function saveWord(title, blocks, filename, btn) {
+    flash(btn, "Making your Word doc…");
+    try {
+      if (!docxLib) docxLib = new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/docx@9.0.2/build/index.umd.js"; s.onload = () => res(window.docx); s.onerror = rej; document.head.appendChild(s); });
+      const D = await docxLib;
+      const kids = [new D.Paragraph({ text: title, heading: D.HeadingLevel.TITLE })];
+      for (const bl of blocks) {
+        if (bl.heading) kids.push(new D.Paragraph({ text: bl.heading, heading: D.HeadingLevel.HEADING_2, spacing: { before: 240 } }));
+        for (const line of String(bl.text || "").split("\n")) {
+          const bullet = /^\s*•\s+/.test(line);
+          kids.push(new D.Paragraph({ children: [new D.TextRun(line.replace(/^\s*•\s+/, ""))], ...(bullet ? { bullet: { level: 0 } } : {}) }));
+        }
+      }
+      const blob = await D.Packer.toBlob(new D.Document({ creator: "BizConnect AI Studio", title, sections: [{ children: kids }] }));
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${filename}.docx`; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      flash(btn, "Saved! Check your Downloads");
+    } catch {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([[title, ...blocks.map((b) => (b.heading ? b.heading + "\n" : "") + b.text)].join("\n\n")], { type: "text/plain" })); a.download = `${filename}.txt`; a.click();
+      flash(btn, "Saved as a text file");
+    }
+  }
+  // A tool button: icon + plain words, big enough to tap.
+  function tool(kind, label, fn, cls = "", aria) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = `tool ${cls}`.trim();
+    b.innerHTML = `${ICO[kind]}<span>${esc(label)}</span>`;
+    b.setAttribute("aria-label", aria || label);
+    b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); fn(b); };
+    return b;
+  }
+  function copyChip(text, what) { return tool("copy", "Copy", (b) => copyText(text, b), "tool-sm", `Copy ${what}`); }
+  // "Use this in…": send a result into another studio with the prompt already filled in.
+  function useIn(targets) {
+    const d = document.createElement("details");
+    d.className = "usein";
+    d.innerHTML = `<summary class="tool">${ICO.wand}<span>Use this in…</span></summary><div class="usein-menu"></div>`;
+    const menu = $(".usein-menu", d);
+    targets.forEach(([studio, label, text]) => {
+      const a = document.createElement("a");
+      a.href = `studio.html?s=${studio}&p=${encodeURIComponent(String(text).slice(0, 1400))}`;
+      a.textContent = label;
+      menu.appendChild(a);
+    });
+    return d;
+  }
+  // Split markdown into titled pieces (email, LinkedIn note, text…) so each can be copied on its own.
+  function sections(text) {
+    const lines = String(text || "").split("\n");
+    const out = []; let cur = { title: "", body: [] };
+    for (const ln of lines) {
+      const m = ln.match(/^\s*(?:#{1,3}\s+(.*)|\*\*([^*]{2,60})\*\*:?\s*)$/);
+      if (m) { if (cur.title || cur.body.join("").trim()) out.push(cur); cur = { title: (m[1] || m[2]).replace(/\*\*/g, "").replace(/:$/, "").trim(), body: [] }; }
+      else cur.body.push(ln);
+    }
+    if (cur.title || cur.body.join("").trim()) out.push(cur);
+    const secs = out.map((s) => ({ title: s.title, body: s.body.join("\n").trim() })).filter((s) => s.body);
+    return secs.filter((s) => s.title).length >= 2 ? secs.map((s) => ({ ...s, title: s.title || "Overview" })) : [];
   }
   async function exportPptx(deck) {
     if (!window.PptxGenJS) {
@@ -169,50 +332,180 @@
     });
     await p.writeFile({ fileName: `${(deck.title || "deck").replace(/[^\w\- ]+/g, "").slice(0, 50)}.pptx` });
   }
+  const deckOutline = (d) => `${d.title}\n${d.subtitle || ""}\n\n` + (d.slides || []).map((s, i) => `${i + 1}. ${s.title}\n${(s.bullets || []).map((x) => "   • " + x).join("\n")}`).join("\n\n");
+  const slug = (s) => String(s || "").replace(/[^\w ]+/g, "").trim().slice(0, 40).replace(/\s+/g, "-");
+
+  // "Write a post caption" card for pictures, videos and audio (1 credit, on request).
+  function captionCard(item, host) {
+    const card = document.createElement("div");
+    card.className = "sect caption-card";
+    card.innerHTML = `<div class="sect-head"><h4>Posting this on social media?</h4></div><div class="sect-body"><p class="muted" style="font-size:13.5px">Get a ready-to-post caption and hashtags (1 credit).</p></div>`;
+    const bodyEl = $(".sect-body", card);
+    const btn = tool("wand", "Write a post caption", async (b) => {
+      b.disabled = true; flash(b, "Writing…");
+      try {
+        const kind = { image: "photo", video: "video", audio: "audio clip" }[item.output.type] || "post";
+        const r = await generate({ studio: "chat", engine: "gemini-flash", prompt: `Write a short, friendly social media caption (1-2 sentences, no hashtags inside it) for a ${kind} made from this idea: "${item.prompt}". Then 5 relevant hashtags. Reply in exactly this format:\nCAPTION: <caption>\nHASHTAGS: #one #two #three #four #five` });
+        const t = r.output.text || "";
+        const cap = ((t.match(/CAPTION:\s*([\s\S]*?)(?:\n\s*HASHTAGS:|$)/i) || [])[1] || t).trim();
+        const tags = ((t.match(/HASHTAGS:\s*(.*)/i) || [])[1] || "").trim();
+        bodyEl.innerHTML = `<p class="cap-text"></p>${tags ? `<p class="cap-tags"></p>` : ""}<div class="img-tools"></div>`;
+        $(".cap-text", bodyEl).textContent = cap;
+        if (tags) $(".cap-tags", bodyEl).textContent = tags;
+        const bar = $(".img-tools", bodyEl);
+        bar.appendChild(tool("copy", "Copy caption + hashtags", (x) => copyText(`${cap}\n\n${tags}`.trim(), x), "tool-sm primary"));
+        bar.appendChild(tool("copy", "Copy caption only", (x) => copyText(cap, x), "tool-sm"));
+      } catch (e) { flash(b, e.message || "Couldn't write it. Try again", false); b.disabled = false; }
+    }, "tool-sm primary");
+    bodyEl.appendChild(btn);
+    host.appendChild(card);
+  }
 
   function renderOutput(item, el) {
     const o = item.output || {};
     const when = new Date(item.created || Date.now()).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-    const meta = `<div class="out-meta"><span>${esc(item.engineLabel || "")} · ${item.credits} credits · ${when}</span><span class="actions"></span></div>`;
-    el.innerHTML = `<div class="out">${meta}<div class="body"></div></div>`;
-    const body = $(".body", el), actions = $(".actions", el);
-    const addBtn = (label, fn) => { const b = document.createElement("button"); b.className = "btn btn-ghost btn-sm"; b.textContent = label; b.onclick = () => fn(b); actions.appendChild(b); };
-    const base = (item.prompt || "bizconnect").replace(/[^\w ]+/g, "").trim().slice(0, 40).replace(/\s+/g, "-") || "bizconnect";
+    el.innerHTML = `<div class="out"><div class="out-meta"><span>${esc(item.engineLabel || "")} · ${item.credits} credits · ${when}</span></div><div class="body"></div><div class="result-tools"><div class="actions"></div><p class="tools-note muted"></p></div></div>`;
+    const body = $(".body", el), actions = $(".actions", el), note = $(".tools-note", el);
+    const add = (b) => actions.appendChild(b);
+    const base = slug(item.prompt) || "bizconnect";
+
     if (o.type === "text") {
-      body.innerHTML = `<div class="out-text">${md(o.text)}</div>`;
-      addBtn("Copy", (b) => copyText(o.text, b));
+      const secs = sections(o.text);
+      const clean = plain(o.text);
+      if (secs.length) {
+        // e.g. the Sales Outreach pack: every piece gets its own Copy button
+        body.innerHTML = `<div class="sects"></div>`;
+        const wrap = $(".sects", body);
+        secs.forEach((s) => {
+          const card = document.createElement("div");
+          card.className = "sect";
+          card.innerHTML = `<div class="sect-head"><h4>${esc(s.title)}</h4></div><div class="sect-body out-text">${md(s.body)}</div>`;
+          const bodyEl = $(".sect-body", card);
+          $(".sect-head", card).appendChild(tool("copy", "Copy", (b) => copyText(plain(s.body), b, COPIED, bodyEl), "tool-sm", `Copy ${s.title}`));
+          wrap.appendChild(card);
+        });
+      } else {
+        body.innerHTML = `<div class="out-text">${md(o.text)}</div>`;
+      }
+      const textEl = $(".out-text", body);
+      add(tool("copy", secs.length ? "Copy everything" : "Copy text", (b) => copyText(clean, b, COPIED, textEl), "primary"));
+      const site = String(o.meta?.site || "").replace(/^www\./, "").split(".")[0];
+      const docName = item.studio === "outreach" ? `outreach-pack-${slug(site) || "prospect"}` : item.studio === "translate" ? `translation-${slug(o.meta?.language) || "text"}` : base;
+      add(tool("doc", "Save as Word doc", (b) => saveWord(item.studio === "outreach" ? `Outreach pack: ${o.meta?.site || ""}` : STUDIO_BY_ID[item.studio]?.name || "BizConnect AI Studio", secs.length ? secs.map((s) => ({ heading: s.title, text: plain(s.body) })) : [{ text: clean }], docName, b)));
+      if (item.studio === "outreach") add(useIn([["translate", "Translate the pack", clean]]));
+      else if (item.studio === "translate") add(useIn([["voice", "Turn it into a voiceover", clean], ["avatar", "Make a talking video", clean]]));
+      else add(useIn([["voice", "Turn it into a voiceover", clean], ["avatar", "Make a talking video", clean], ["deck", "Make slides from it", clean], ["translate", "Translate it", clean]]));
     } else if (o.type === "image") {
-      body.innerHTML = `<div class="out-img">${o.urls.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Generated image"></a>`).join("")}</div>`;
-      addBtn(o.urls.length > 1 ? "Download all" : "Download", () => o.urls.forEach((u, i) => download(u, `${base}-${i + 1}.jpg`)));
-    } else if (o.type === "video") {
-      body.innerHTML = `<video src="${esc(o.url)}" controls playsinline autoplay muted loop></video>`;
-      addBtn("Download MP4", () => download(o.url, `${base}.mp4`));
-    } else if (o.type === "audio") {
-      body.innerHTML = `<audio src="${esc(o.url)}" controls></audio>${o.meta?.lyrics ? `<details class="adv"><summary>Lyrics</summary><div class="out-text" style="margin-top:10px">${esc(o.meta.lyrics)}</div></details>` : ""}`;
-      addBtn("Download audio", () => download(o.url, `${base}.${/\.wav/.test(o.url) ? "wav" : "mp3"}`));
+      body.innerHTML = `<div class="out-img"></div>`;
+      const grid = $(".out-img", body);
+      const names = o.urls.map((u, i) => `${base}-${i + 1}.jpg`);
+      o.urls.forEach((u, i) => {
+        if (PHONE_SAVE) prepFile(u, names[i], "image/jpeg");
+        const card = document.createElement("figure");
+        card.className = "img-card";
+        card.innerHTML = `<a href="${esc(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${esc(u)}" alt="Generated image ${i + 1}" crossorigin="anonymous"></a><figcaption class="img-tools"></figcaption>`;
+        const bar = $(".img-tools", card);
+        const n = o.urls.length > 1 ? ` ${i + 1}` : "";
+        if (PHONE_SAVE) bar.appendChild(tool("phone", "Save to phone", (b) => shareFiles([u], [names[i]], "image/jpeg", b), "tool-sm", `Save picture${n} to phone`));
+        else bar.appendChild(tool("down", "Download", (b) => download(u, names[i], b), "tool-sm", `Download picture${n}`));
+        bar.appendChild(tool("copy", "Copy picture", (b) => copyImage(u, b), "tool-sm", `Copy picture${n}`));
+        grid.appendChild(card);
+      });
+      if (PHONE_SAVE) add(tool("phone", o.urls.length > 1 ? "Save all to phone" : "Save to phone", (b) => shareFiles(o.urls, names, "image/jpeg", b), "primary"));
+      else if (o.urls.length > 1) add(tool("down", "Download all", (b) => { flash(b, "Downloading…"); o.urls.forEach((u, i) => setTimeout(() => download(u, names[i]), i * 700)); }, "primary"));
+      else add(tool("down", "Download", (b) => download(o.urls[0], names[0], b), "primary"));
+      add(useIn([["video", "Animate it into a video", item.prompt], ["image", "Make another version", item.prompt]]));
+      captionCard(item, body);
+    } else if (o.type === "video" || o.type === "audio") {
+      const isVid = o.type === "video";
+      const name = `${base}.${isVid ? "mp4" : /\.wav/.test(o.url) ? "wav" : "mp3"}`;
+      const type = isVid ? "video/mp4" : "audio/mpeg";
+      if (SHARE_FILES) prepFile(o.url, name, type);
+      body.innerHTML = isVid ? `<video src="${esc(o.url)}" controls playsinline autoplay muted loop></video>` : `<audio src="${esc(o.url)}" controls></audio>`;
+      if (o.meta?.lyrics) {
+        const card = document.createElement("div");
+        card.className = "sect";
+        card.innerHTML = `<div class="sect-head"><h4>Lyrics</h4></div><div class="sect-body out-text">${esc(o.meta.lyrics)}</div>`;
+        const lyr = $(".sect-body", card);
+        $(".sect-head", card).appendChild(tool("copy", "Copy lyrics", (b) => copyText(o.meta.lyrics, b, COPIED, lyr), "tool-sm"));
+        body.appendChild(card);
+      }
+      if (PHONE_SAVE) add(tool("phone", "Save to phone", (b) => shareFiles([o.url], [name], type, b), "primary"));
+      else add(tool("down", isVid ? "Download video" : "Download audio", (b) => download(o.url, name, b), "primary"));
+      if (SHARE_FILES) add(tool("share", "Share to Facebook, text…", (b) => shareFiles([o.url], [name], type, b)));
+      if (!TOUCH) {
+        add(tool("link", "Copy link to send", (b) => copyText(o.url, b, "Link copied! Paste it in an email or text")));
+        note.textContent = "Tip: shared links work for about 7 days. Download the file to keep it forever.";
+      }
+      if (isVid) add(useIn([["video", "Make another version", item.prompt]]));
+      else if (item.studio === "voice") add(useIn([["avatar", "Make a talking video with this script", item.prompt]]));
+      captionCard(item, body);
     } else if (o.type === "deck") {
       const d = o.deck;
-      body.innerHTML = `<div class="out-text" style="white-space:normal"><h2 style="font-family:var(--serif);font-weight:400;font-size:24px;color:var(--ivory)">${esc(d.title)}</h2><p class="muted">${esc(d.subtitle || "")}</p></div>
-        <div class="slides">${(d.slides || []).map((s, i) => `<div class="slide"><span class="n">${String(i + 1).padStart(2, "0")}</span><h5>${esc(s.title)}</h5><ul>${(s.bullets || []).map((b) => `<li>${esc(b)}</li>`).join("")}</ul></div>`).join("")}</div>`;
-      addBtn("Download PowerPoint", (b) => { b.textContent = "Building…"; exportPptx(d).then(() => (b.textContent = "Download PowerPoint")); });
-      addBtn("Copy outline", (b) => copyText(`${d.title}\n${d.subtitle || ""}\n\n` + (d.slides || []).map((s, i) => `${i + 1}. ${s.title}\n${(s.bullets || []).map((x) => "  - " + x).join("\n")}`).join("\n\n"), b));
+      body.innerHTML = `<div class="out-text" style="white-space:normal"><h2 style="font-family:var(--serif);font-weight:400;font-size:24px;color:var(--ivory)">${esc(d.title)}</h2><p class="muted">${esc(d.subtitle || "")}</p></div><div class="slides"></div>`;
+      const grid = $(".slides", body);
+      (d.slides || []).forEach((s, i) => {
+        const card = document.createElement("div");
+        card.className = "slide";
+        card.innerHTML = `<span class="n">${String(i + 1).padStart(2, "0")}</span><h5>${esc(s.title)}</h5><ul>${(s.bullets || []).map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+        card.appendChild(tool("copy", "Copy", (b) => copyText(`${s.title}\n${(s.bullets || []).map((x) => "• " + x).join("\n")}${s.notes ? `\n\nSpeaker notes: ${s.notes}` : ""}`, b), "tool-sm slide-copy", `Copy slide ${i + 1}`));
+        grid.appendChild(card);
+      });
+      const notes = (d.slides || []).map((s, i) => `Slide ${i + 1}: ${s.title}\n${s.notes || ""}`).join("\n\n");
+      add(tool("down", "Download PowerPoint", (b) => { flash(b, "Building your slides…"); exportPptx(d).then(() => flash(b, "Saved! Check your Downloads")); }, "primary"));
+      add(tool("copy", "Copy outline", (b) => copyText(deckOutline(d), b)));
+      add(tool("doc", "Save as Word doc", (b) => saveWord(d.title || "Presentation", (d.slides || []).map((s, i) => ({ heading: `${i + 1}. ${s.title}`, text: (s.bullets || []).map((x) => "• " + x).join("\n") + (s.notes ? `\nSpeaker notes: ${s.notes}` : "") })), slug(d.title) || base, b)));
+      if ((d.slides || []).some((s) => s.notes)) {
+        add(tool("copy", "Copy speaker notes", (b) => copyText(notes, b)));
+        add(useIn([["voice", "Record the speaker notes as a voiceover", (d.slides || []).map((s) => s.notes).filter(Boolean).join(" ")]]));
+      }
     } else if (o.type === "brand") {
       const k = o.kit || {};
+      const kbase = slug(k.name) || base;
+      const row = (label, text, big) => text ? `<div class="kv"><div><span class="label">${esc(label)}</span><p${big ? ' class="big"' : ""}>${esc(text)}</p></div><span data-copy="${esc(text)}" data-what="${esc(label.toLowerCase())}"></span></div>` : "";
+      const colors = (k.colors || []).map((c) => ({ ...c, hex: /^#[0-9a-f]{3,8}$/i.test(c.hex || "") ? c.hex : "#888888" }));
       body.innerHTML = `<div class="kit-grid">
-          <div>${o.logo ? `<img src="${esc(o.logo)}" alt="Logo concept" style="border-radius:10px;border:1px solid var(--line-soft)">` : ""}<p class="muted" style="font-size:12px;margin-top:6px">Logo concept</p></div>
-          <div class="out-text" style="white-space:normal">
-            <h2 style="font-family:var(--serif);font-weight:400;font-size:26px;color:var(--ivory);margin-top:0">${esc(k.name || "")}</h2>
-            <p style="color:var(--gold-hi);font-size:17px">${esc(k.tagline || "")}</p>
-            <h3>Other taglines</h3><p>${(k.alt_taglines || []).map(esc).join("<br>")}</p>
-            <h3>Elevator pitch</h3><p>${esc(k.elevator_pitch || "")}</p>
-            <h3>Brand voice</h3><p>${(k.voice || []).map(esc).join(" · ")}</p>
+          <div>${o.logo ? `<img src="${esc(o.logo)}" alt="Logo concept" crossorigin="anonymous" style="border-radius:10px;border:1px solid var(--line-soft)"><div class="img-tools logo-tools"></div>` : ""}</div>
+          <div class="out-text kit" style="white-space:normal">
+            ${row("Business name", k.name, true)}
+            ${row("Tagline", k.tagline)}
+            ${(k.alt_taglines || []).map((t, i) => row(`Tagline option ${i + 2}`, t)).join("")}
+            ${row("Elevator pitch", k.elevator_pitch)}
+            ${row("Brand voice", (k.voice || []).join(" · "))}
           </div></div>
-        <div><span class="label">Color palette</span><div class="swatches" style="margin-top:8px">${(k.colors || []).map((c) => `<div class="sw" title="${esc(c.use || "")}"><div style="background:${esc(c.hex)}"></div><span>${esc(c.name || "")}<br>${esc(c.hex)}</span></div>`).join("")}</div></div>
-        <div class="out-text" style="white-space:normal"><h3>Fonts</h3><p>Headings: ${esc(k.fonts?.heading || "")} · Body: ${esc(k.fonts?.body || "")}</p><h3>Short bio</h3><p>${esc(k.bio_short || "")}</p><h3>Social bio</h3><p>${esc(k.bio_social || "")}</p></div>`;
-      addBtn("Copy kit", (b) => copyText(`${k.name}\n${k.tagline}\n\nPitch: ${k.elevator_pitch}\nVoice: ${(k.voice || []).join(", ")}\nColors: ${(k.colors || []).map((c) => `${c.name} ${c.hex}`).join(", ")}\nFonts: ${k.fonts?.heading} / ${k.fonts?.body}\n\nBio: ${k.bio_short}\nSocial: ${k.bio_social}`, b));
-      if (o.logo) addBtn("Download logo", () => download(o.logo, `${base}-logo.jpg`));
+        <div><span class="label">Color palette · tap a color to copy its code</span><div class="swatches" style="margin-top:8px">${colors.map((c) => `<button type="button" class="sw" data-hex="${esc(c.hex)}" aria-label="Copy color ${esc(c.name || "")} ${esc(c.hex)}" title="${esc(c.use || "")}"><div style="background:${esc(c.hex)}"></div><span>${esc(c.name || "")}<br>${esc(c.hex)}</span></button>`).join("")}</div></div>
+        <div class="out-text kit" style="white-space:normal">
+          ${row("Fonts", k.fonts ? `Headings: ${k.fonts.heading || ""} · Body: ${k.fonts.body || ""}` : "")}
+          ${row("Short bio", k.bio_short)}
+          ${row("Social media bio", k.bio_social)}
+        </div>`;
+      body.querySelectorAll("[data-copy]").forEach((s) => s.replaceWith(copyChip(s.dataset.copy, s.dataset.what)));
+      body.querySelectorAll("[data-hex]").forEach((s) => (s.onclick = async () => flash(s, `Copied ${s.dataset.hex}`, await writeClipboard(s.dataset.hex))));
+      const lt = $(".logo-tools", body);
+      if (lt) {
+        if (PHONE_SAVE) { prepFile(o.logo, `${kbase}-logo.jpg`, "image/jpeg"); lt.appendChild(tool("phone", "Save to phone", (b) => shareFiles([o.logo], [`${kbase}-logo.jpg`], "image/jpeg", b), "tool-sm", "Save logo to phone")); }
+        else lt.appendChild(tool("down", "Download", (b) => download(o.logo, `${kbase}-logo.jpg`, b), "tool-sm", "Download logo"));
+        lt.appendChild(tool("copy", "Copy picture", (b) => copyImage(o.logo, b), "tool-sm", "Copy logo picture"));
+      }
+      const kitBlocks = [
+        { heading: "Business name", text: k.name || "" }, { heading: "Tagline", text: k.tagline || "" },
+        { heading: "Other taglines", text: (k.alt_taglines || []).map((t) => "• " + t).join("\n") },
+        { heading: "Elevator pitch", text: k.elevator_pitch || "" }, { heading: "Brand voice", text: (k.voice || []).join(", ") },
+        { heading: "Colors", text: colors.map((c) => `• ${c.name} ${c.hex}${c.use ? ` (${c.use})` : ""}`).join("\n") },
+        { heading: "Fonts", text: `Headings: ${k.fonts?.heading || ""}\nBody: ${k.fonts?.body || ""}` },
+        { heading: "Short bio", text: k.bio_short || "" }, { heading: "Social media bio", text: k.bio_social || "" },
+      ].filter((b) => b.text.trim());
+      const kitText = kitBlocks.map((b) => `${b.heading}:\n${b.text}`).join("\n\n");
+      add(tool("copy", "Copy whole kit", (b) => copyText(kitText, b), "primary"));
+      add(tool("doc", "Save as Word doc", (b) => saveWord(`${k.name || "Brand"} brand kit`, kitBlocks, `${kbase}-brand-kit`, b)));
+      add(useIn([
+        ["image", "Make a flyer with this tagline", `A clean, modern flyer for "${k.name || "my business"}" with the headline "${k.tagline || ""}", using the brand colors ${colors.map((c) => c.hex).join(", ")}`],
+        ["music", "Make a jingle", `A short upbeat jingle for ${k.name || "my business"}: ${k.tagline || ""}`],
+        ["avatar", "Make an intro video", k.elevator_pitch || ""],
+      ]));
     }
   }
+
   function thumbHTML(item, icon) {
     const o = item.output || {};
     let th = svg(icon);
@@ -427,5 +720,5 @@
     window.BCAI.askAllie = openChat;
   }
 
-  window.BCAI = { api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, allie };
+  window.BCAI = { api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, allie, tool, plain, saveWord, useIn, announce };
 })();

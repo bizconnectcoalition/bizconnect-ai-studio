@@ -42,9 +42,28 @@
   function drawThread() {
     const st = $("#stage");
     if (!thread.length) return;
-    st.innerHTML = `<div class="thread" id="thread">${thread.map((m) => `<div class="msg ${m.role === "user" ? "me" : "ai"}">${esc(m.content)}</div>`).join("")}</div>
-      <div class="out-meta" style="margin-top:12px"><span>${thread.filter((m) => m.role === "assistant").length} replies</span><span class="actions"><button class="btn btn-ghost btn-sm" id="newchat">New chat</button></span></div>`;
-    $("#newchat").onclick = () => { thread.length = 0; $("#stage").innerHTML = `<div class="stage-empty"><div><div class="ico">${svg(S.icon)}</div><p>New conversation. Ask anything.</p></div></div>`; };
+    st.innerHTML = `<div class="thread" id="thread"></div>
+      <div class="result-tools" style="margin-top:12px"><div class="actions"></div></div>`;
+    const box = $("#thread");
+    thread.forEach((m) => {
+      const d = document.createElement("div");
+      d.className = `msg ${m.role === "user" ? "me" : "ai"}`;
+      d.textContent = m.role === "user" ? m.content : BCAI.plain(m.content);
+      if (m.role !== "user") {
+        // every AI reply can be copied on its own: that's usually the thing people paste into an email or post
+        const bar = document.createElement("div");
+        bar.className = "msg-tools";
+        bar.appendChild(BCAI.tool("copy", "Copy", (b) => BCAI.copyText(BCAI.plain(m.content), b), "tool-sm", `Copy reply ${thread.filter((x) => x.role === "assistant").indexOf(m) + 1}`));
+        d.appendChild(bar);
+      }
+      box.appendChild(d);
+    });
+    const acts = $("#stage .actions");
+    const last = [...thread].reverse().find((m) => m.role === "assistant");
+    acts.appendChild(BCAI.tool("doc", "Save chat as Word doc", (b) => BCAI.saveWord("Chat", thread.map((m) => ({ heading: m.role === "user" ? "You asked" : "AI answered", text: BCAI.plain(m.content) })), "chat", b)));
+    if (last) acts.appendChild(BCAI.useIn([["voice", "Turn the last reply into a voiceover", BCAI.plain(last.content)], ["avatar", "Make a talking video of it", BCAI.plain(last.content)], ["deck", "Make slides from it", BCAI.plain(last.content)], ["translate", "Translate it", BCAI.plain(last.content)]]));
+    const nb = document.createElement("button"); nb.type = "button"; nb.className = "btn btn-ghost btn-sm"; nb.id = "newchat"; nb.textContent = "New chat"; acts.appendChild(nb);
+    nb.onclick = () => { thread.length = 0; $("#stage").innerHTML = `<div class="stage-empty"><div><div class="ico">${svg(S.icon)}</div><p>New conversation. Ask anything.</p></div></div>`; };
     const t = $("#thread"); t.scrollTop = t.scrollHeight;
   }
 
@@ -101,6 +120,7 @@
     if (!it) return;
     BCAI.renderOutput(it, $("#stage"));
     const reuse = document.createElement("button");
+    reuse.type = "button";
     reuse.className = "btn btn-ghost btn-sm";
     reuse.textContent = "Reuse prompt";
     reuse.onclick = () => { input.value = it.prompt; update(); input.focus(); };

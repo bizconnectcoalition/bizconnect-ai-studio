@@ -33,7 +33,7 @@
     $("#all").innerHTML = hist.items.map((it) => `<a class="h-item" href="studio.html?s=${it.studio}&item=${it.id}">${BCAI.thumbHTML(it, STUDIO_BY_ID[it.studio]?.icon || "")}</a>`).join("");
   }
 
-  $("#copyref").onclick = (e) => BCAI.copyText($("#reflink").value, e.target);
+  $("#copyref").onclick = (e) => BCAI.copyText($("#reflink").value, e.currentTarget, "Link copied! Share it with your chapter", $("#reflink"));
   document.querySelectorAll("[data-pack]").forEach((b) => (b.onclick = async () => {
     b.disabled = true;
     try { const d = await BCAI.api("/api/topup", { pack: b.dataset.pack }); BCAI.setUser(d.user); await load(); }
