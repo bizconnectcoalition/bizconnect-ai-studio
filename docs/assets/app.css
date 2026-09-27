@@ -231,21 +231,108 @@ table.t th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-tr
 footer.bot{border-top:1px solid var(--line-soft);margin-top:50px;padding:26px 0;font-size:12.5px;color:var(--slate-dim)}
 footer.bot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
-/* ---------- Allie concierge ---------- */
-.allie-fab{position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:center;gap:10px;cursor:pointer;border:none;background:none}
-.allie-fab .bubble{background:var(--navy-800);border:1px solid var(--line);border-radius:100px;padding:9px 15px;font-size:13px;box-shadow:var(--shadow-md)}
-.allie-fab img{width:58px;height:58px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--gold);box-shadow:var(--shadow-md);background:var(--navy-700)}
-.allie-panel{position:fixed;right:22px;bottom:92px;z-index:61;width:min(380px,calc(100vw - 32px));height:min(520px,calc(100vh - 130px));background:linear-gradient(165deg,var(--navy-800),var(--navy-950));border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
-.allie-panel header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
-.allie-panel header img{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;border:1px solid var(--gold)}
-.allie-panel header b{font-family:var(--serif);font-weight:400;font-size:17px}
-.allie-panel header small{display:block;color:var(--slate);font-size:11.5px}
-.allie-panel header button{margin-left:auto;background:none;border:none;color:var(--slate);font-size:20px;cursor:pointer}
-.allie-panel .thread{flex:1;padding:14px;max-height:none}
-.allie-panel .msg{font-size:14px}
-.allie-panel form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line-soft)}
-.allie-panel form input{flex:1}
+/* ---------- Allie, the floating guide (matches the main Biz Connect Coalition site) ---------- */
+.allie{
+  position:fixed;right:26px;bottom:24px;z-index:80;
+  display:flex;flex-direction:column;align-items:flex-end;
+  opacity:0;transform:translateY(30px) scale(.92);pointer-events:none;
+  transition:opacity .7s cubic-bezier(.2,.8,.3,1),transform .7s cubic-bezier(.2,1.3,.4,1);
+}
+/* settled state must be transform-free: a transform would become the containing block for the fixed chat panel */
+.allie.in{opacity:1;transform:none;pointer-events:auto}
+.allie.bye{opacity:0;transform:translateY(30px) scale(.9);pointer-events:none}
+.allie-figure{position:relative;width:190px;height:320px;cursor:pointer;animation:allie-bob 5.5s ease-in-out infinite}
+.allie-figure:focus-visible{outline:2px solid var(--gold-hi);outline-offset:4px;border-radius:12px}
+.allie-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:bottom;opacity:0;transition:opacity 1.1s ease;filter:drop-shadow(0 16px 26px rgba(0,0,0,.5))}
+.allie-img.on{opacity:1}
+@keyframes allie-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.allie-bubble{
+  max-width:250px;margin-bottom:12px;margin-right:8px;position:relative;cursor:pointer;
+  background:var(--ivory);color:var(--navy-900);
+  font-size:13.5px;line-height:1.45;padding:12px 15px;border-radius:14px 14px 3px 14px;
+  box-shadow:0 14px 34px rgba(0,0,0,.4);border:1px solid rgba(198,151,47,.5);
+  opacity:0;transform:translateY(8px) scale(.96);transform-origin:bottom right;
+  transition:opacity .4s ease,transform .4s cubic-bezier(.2,1.2,.4,1);pointer-events:none;
+}
+.allie-bubble.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.allie-bubble::after{content:"";position:absolute;bottom:-7px;right:22px;width:12px;height:12px;background:var(--ivory);border-right:1px solid rgba(198,151,47,.5);border-bottom:1px solid rgba(198,151,47,.5);transform:rotate(45deg)}
+/* the X is always visible (not hover-only) so it works on phones too */
+.allie-close{
+  position:absolute;bottom:292px;right:4px;z-index:3;width:26px;height:26px;border-radius:50%;
+  background:var(--navy-800);color:var(--ivory-dim);border:1px solid var(--line);
+  font-size:16px;line-height:1;cursor:pointer;opacity:.8;transition:opacity .3s,color .3s,border-color .3s;
+  display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 12px rgba(0,0,0,.35);
+}
+.allie-close::after{content:"";position:absolute;inset:-8px;border-radius:50%}
+.allie:hover .allie-close,.allie-close:focus-visible{opacity:1}
+.allie-close:hover{color:var(--ivory);border-color:var(--gold)}
+.allie-figure.chatting{animation:none;transform:scale(.92);transition:transform .4s}
 .allie-go{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;color:var(--navy-950);background:var(--gold-hi);border-radius:100px;padding:5px 12px}
+/* small tab to bring Allie back after she's been closed */
+.allie-tab{
+  position:fixed;right:18px;bottom:18px;z-index:79;display:flex;align-items:center;gap:8px;
+  background:var(--navy-800);border:1px solid var(--gold);color:var(--ivory);font-weight:600;font-size:13px;
+  border-radius:100px;padding:5px 14px 5px 5px;cursor:pointer;box-shadow:var(--shadow-md);
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .35s,transform .35s;
+}
+.allie-tab img{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:top}
+.allie-tab.show{opacity:1;transform:none;pointer-events:auto}
+.allie-tab:hover{border-color:var(--gold-hi)}
+
+/* ---------- Allie chat panel ---------- */
+.allie-chat{
+  position:fixed;bottom:24px;right:236px;width:350px;max-width:calc(100vw - 40px);
+  background:linear-gradient(170deg,var(--navy-800),var(--navy-950));
+  border:1px solid var(--gold);border-radius:16px;overflow:hidden;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.7),0 0 0 4px rgba(198,151,47,.08);
+  opacity:0;transform:translateY(16px) scale(.96);transform-origin:bottom right;
+  pointer-events:none;transition:opacity .35s ease,transform .35s cubic-bezier(.2,1.1,.4,1);
+  display:flex;flex-direction:column;
+}
+.allie-chat.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.ac-head{display:flex;align-items:center;gap:9px;padding:13px 16px;background:rgba(198,151,47,.1);border-bottom:1px solid var(--line)}
+.ac-head b{font-family:var(--serif);font-weight:400;font-size:16px;letter-spacing:.06em;color:var(--ivory)}
+.ac-head .ac-sub{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-hi)}
+.ac-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(95,185,138,.6);animation:acpulse 2.2s infinite;flex:none}
+@keyframes acpulse{0%{box-shadow:0 0 0 0 rgba(95,185,138,.5)}70%{box-shadow:0 0 0 9px rgba(95,185,138,0)}100%{box-shadow:0 0 0 0 rgba(95,185,138,0)}}
+.ac-close{margin-left:auto;background:none;border:none;color:var(--slate);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;transition:color .25s}
+.ac-close:hover{color:var(--ivory)}
+.ac-msgs{padding:14px;display:flex;flex-direction:column;gap:9px;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--navy-600) transparent}
+.allie-chat.open~.allie-bubble{display:none!important}
+.ac-msg{max-width:86%;padding:9px 13px;border-radius:13px;font-size:13.5px;line-height:1.5;animation:acmsg .3s ease both;white-space:pre-wrap}
+@keyframes acmsg{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ac-msg.bot{align-self:flex-start;background:var(--ivory);color:var(--navy-900);border-bottom-left-radius:4px}
+.ac-msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:var(--navy-950);border-bottom-right-radius:4px;font-weight:500}
+.ac-msg.typing{display:flex;gap:4px;padding:12px 14px}
+.ac-msg.typing span{width:6px;height:6px;border-radius:50%;background:var(--navy-600);animation:acdot 1.2s infinite}
+.ac-msg.typing span:nth-child(2){animation-delay:.15s}
+.ac-msg.typing span:nth-child(3){animation-delay:.3s}
+@keyframes acdot{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.ac-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}
+.ac-chip{font-family:var(--mono);font-size:11px;letter-spacing:.02em;color:var(--gold-hi);background:rgba(198,151,47,.1);border:1px solid var(--line);border-radius:100px;padding:6px 12px;cursor:pointer;transition:.25s;text-align:left}
+.ac-chip:hover{background:rgba(198,151,47,.22);color:var(--gold-glow)}
+.ac-input{display:flex;align-items:center;gap:6px;padding:10px 12px;border-top:1px solid var(--line-soft);background:rgba(10,20,40,.6)}
+.ac-input .mic-wrap{flex:1}
+.ac-input input{flex:1;background:rgba(247,246,242,.06);border:1px solid var(--line-soft);border-radius:100px;color:var(--ivory);font-family:var(--sans);font-size:13.5px;padding:9px 15px;outline:none;transition:border-color .25s;width:100%}
+.ac-input input:focus{border-color:var(--gold)}
+.ac-input input::placeholder{color:var(--slate-dim)}
+.ac-input .mic-btn{width:30px;height:30px;right:4px}
+.ac-send{width:36px;height:36px;flex:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.25s;padding:0;background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:var(--navy-950);border:none}
+.ac-send svg{width:16px;height:16px}
+.ac-send:hover{transform:scale(1.08)}
+@media (max-width:680px){
+  .allie{right:12px;bottom:12px}
+  .allie-figure{width:120px;height:200px}
+  .allie-close{bottom:176px}
+  .allie-bubble{max-width:200px;font-size:12.5px}
+  .allie-chat{left:12px;right:12px;width:auto;bottom:224px}
+  .ac-msgs{max-height:200px}
+  .allie.form-focus{opacity:0;pointer-events:none;transition:opacity .3s}
+}
+@media (prefers-reduced-motion:reduce){
+  .allie-figure{animation:none}
+  .allie,.allie-img,.allie-bubble{transition-duration:.01s}
+}
 
 /* ---------- responsive ---------- */
 @media (max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.studio-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
@@ -256,6 +343,39 @@ footer.bot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:w
   .packs{grid-template-columns:1fr}
   .kit-grid{grid-template-columns:1fr}
   .hero{padding-top:40px}
-  .allie-fab .bubble{display:none}
 }
 @media (max-width:420px){.cards{grid-template-columns:1fr}.card{min-height:0}}
+
+/* ---------- voice input (mic on every text box) ---------- */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.mic-wrap{position:relative;display:block;min-width:0;width:100%}
+.mic-wrap > input,.mic-wrap > textarea{padding-right:52px!important;width:100%}
+.mic-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(231,200,120,.55);background:rgba(198,151,47,.12);color:var(--gold-hi);cursor:pointer;transition:background .2s,border-color .2s,color .2s,box-shadow .15s;z-index:2}
+.mic-btn::after{content:"";position:absolute;inset:-5px;border-radius:50%}
+.mic-wrap.ta .mic-btn{top:8px;transform:none}
+.mic-btn svg{width:18px;height:18px}
+.mic-btn:hover{background:rgba(198,151,47,.26);border-color:var(--gold-hi)}
+.mic-btn:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+.mic-btn.rec{background:#C8443A;border-color:#F0A097;color:#fff;box-shadow:0 0 0 calc(4px + var(--lvl,0) * 12px) rgba(224,119,107,.30);animation:micpulse 1.4s ease-in-out infinite}
+.mic-btn.rec svg{width:13px;height:13px}
+@keyframes micpulse{50%{background:#A8352D}}
+.mic-btn.busy{cursor:progress;background:rgba(198,151,47,.16)}
+.mic-spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(231,200,120,.3);border-top-color:var(--gold-hi);animation:spin .8s linear infinite}
+.mic-listening{border-color:#E0776B!important;box-shadow:0 0 0 3px rgba(224,119,107,.15)}
+.mic-listening[readonly]{color:rgba(247,246,242,.72)}
+.mic-pill{position:absolute;right:52px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;z-index:2}
+.mic-wrap.ta .mic-pill{top:14px;transform:none}
+.mic-pill.show{opacity:1}
+.mic-pill.rec{background:rgba(200,68,58,.92);color:#fff}
+.mic-pill.busy{background:rgba(198,151,47,.92);color:var(--navy-950)}
+.mic-hint{position:absolute;right:0;top:calc(100% + 8px);z-index:30;background:var(--navy-800);border:1px solid var(--gold);color:var(--ivory);font-size:13px;padding:9px 34px 9px 12px;border-radius:10px;box-shadow:var(--shadow-md);max-width:300px;animation:drop .3s ease}
+.mic-hint::before{content:"";position:absolute;right:20px;top:-6px;width:10px;height:10px;background:var(--navy-800);border-left:1px solid var(--gold);border-top:1px solid var(--gold);transform:rotate(45deg)}
+.mic-hint b{color:var(--gold-hi)}
+.mic-hint button{position:absolute;right:8px;top:6px;background:none;border:none;color:var(--slate);font-size:17px;cursor:pointer}
+.ask-bar .mic-wrap{flex:1}
+.ask-bar .mic-wrap > input{height:100%}
+.mic-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--navy-800);border:1px solid var(--line);color:var(--ivory);padding:11px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-md);z-index:90;transition:opacity .25s,transform .25s;max-width:min(560px,calc(100vw - 32px));display:flex;align-items:center;gap:14px}
+.mic-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.mic-toast button{background:none;border:1px solid var(--gold);color:var(--gold-hi);font-weight:700;border-radius:6px;padding:4px 12px;cursor:pointer}
+@media (pointer:coarse){.mic-btn{width:44px;height:44px}.mic-wrap > input,.mic-wrap > textarea{padding-right:58px!important}.mic-pill{right:58px}}
+@media (prefers-reduced-motion:reduce){.mic-btn.rec{animation:none;box-shadow:0 0 0 4px rgba(224,119,107,.35)}.mic-spin{animation-duration:2.4s}.mic-hint{animation:none}}

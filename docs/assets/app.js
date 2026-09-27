@@ -286,22 +286,103 @@
     else { gate(); document.addEventListener("bcai:signedin", fn, { once: true }); }
   }
 
-  // ---------------- Allie concierge ----------------
+  // ---------------- Allie concierge (full-size, same look and motion as the main BizConnect site) ----------------
+  const ALLIE_POSES = [
+    { src: "assets/img/allie/allie-pose-wave.png", alt: "Allie waving hello" },
+    { src: "assets/img/allie/allie-pose-point.png", alt: "Allie pointing something out" },
+    { src: "assets/img/allie/allie-pose-welcome.png", alt: "Allie welcoming you with open arms" },
+    { src: "assets/img/allie/allie-pose-thumbsup.png", alt: "Allie giving a thumbs up" },
+    { src: "assets/img/allie/allie-pose-arms-crossed.png", alt: "Allie standing confidently" },
+    { src: "assets/img/allie/allie-pose-clipboard.png", alt: "Allie holding a clipboard, ready to help" },
+  ];
+  const ALLIE_PAGE = {
+    "index.html": { pose: 0, lines: ["Hi, I'm Allie! 👋 Not sure where to start? Tell me what you want to make.", "Tip: tap the 🎤 in any box and just talk. I'll type it for you."] },
+    "studio.html": { pose: 1, lines: ["Try an example prompt, then tweak it. That's the fastest way to learn.", "Want better results? Switch to a Premium engine on the left."] },
+    "account.html": { pose: 3, lines: ["Share your referral link and earn on every credit pack your referrals buy.", "Credits never expire, and there's no monthly fee."] },
+  };
   function allie() {
-    const fab = document.createElement("button");
-    fab.className = "allie-fab";
-    fab.setAttribute("aria-label", "Ask Allie for help");
-    fab.innerHTML = `<span class="bubble">Not sure where to start? <b style="color:var(--gold-hi)">Ask Allie</b></span><img src="assets/img/allie-avatar-sm.jpg" alt="">`;
-    document.body.appendChild(fab);
-    let panel = null;
+    const page = location.pathname.split("/").pop() || "index.html";
+    const cfg = ALLIE_PAGE[page] || ALLIE_PAGE["index.html"];
+    const POSE_CYCLE_MS = 22000, APPEAR_MS = 5000, BUBBLE_MS = 9000;
+    let poseIx = cfg.pose, lineIx = 0, frontIsA = true, bubbleTimer = null;
+    const hidden = () => { try { return sessionStorage.getItem("allieHidden") === "1"; } catch { return false; } };
+
+    const root = document.createElement("div");
+    root.className = "allie";
+    root.setAttribute("role", "complementary");
+    root.setAttribute("aria-label", "Allie, your BizConnect Studio guide");
+    root.innerHTML = `
+      <div class="allie-chat" role="dialog" aria-label="Chat with Allie">
+        <div class="ac-head"><span class="ac-dot"></span><b>Allie</b><span class="ac-sub">Studio concierge</span><button class="ac-close" type="button" aria-label="Close chat">&times;</button></div>
+        <div class="ac-msgs" aria-live="polite"></div>
+        <div class="ac-chips"></div>
+        <form class="ac-input"><input type="text" placeholder="Tell me what you want to make…" aria-label="Ask Allie" maxlength="500"><button class="ac-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
+      </div>
+      <div class="allie-bubble" aria-live="polite"></div>
+      <button class="allie-close" type="button" aria-label="Hide Allie" title="Hide Allie">&times;</button>
+      <div class="allie-figure" role="button" tabindex="0" aria-label="Chat with Allie" title="Click to chat with Allie">
+        <img class="allie-img on" alt=""><img class="allie-img" alt="">
+      </div>`;
+    const tab = document.createElement("button");
+    tab.className = "allie-tab";
+    tab.type = "button";
+    tab.innerHTML = `<img src="assets/img/allie-avatar-sm.jpg" alt=""> Ask Allie`;
+    tab.setAttribute("aria-label", "Show Allie, your studio guide");
+    document.body.appendChild(root);
+    document.body.appendChild(tab);
+
+    const [imgA, imgB] = root.querySelectorAll(".allie-img");
+    const bubble = $(".allie-bubble", root), figure = $(".allie-figure", root), chat = $(".allie-chat", root);
+    const msgsEl = $(".ac-msgs", root), chipsEl = $(".ac-chips", root), form = $(".ac-input", root), input = $("input", form);
+    const applyPose = (img, p) => { img.src = p.src; img.alt = p.alt; };
+    applyPose(imgA, ALLIE_POSES[poseIx]);
+    ALLIE_POSES.forEach((p) => { const i = new Image(); i.src = p.src; });
+
+    function nextPose() {
+      poseIx = (poseIx + 1) % ALLIE_POSES.length;
+      const front = frontIsA ? imgA : imgB, back = frontIsA ? imgB : imgA;
+      applyPose(back, ALLIE_POSES[poseIx]);
+      const go = () => { back.classList.add("on"); front.classList.remove("on"); frontIsA = !frontIsA; };
+      if (back.complete) requestAnimationFrame(go); else back.onload = () => requestAnimationFrame(go);
+    }
+    function say(text) {
+      if (chat.classList.contains("open") || !root.classList.contains("in")) return;
+      bubble.textContent = text;
+      bubble.classList.add("show");
+      clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(() => bubble.classList.remove("show"), BUBBLE_MS);
+    }
+    function show(first) {
+      root.classList.remove("bye"); root.classList.add("in"); tab.classList.remove("show");
+      if (first) setTimeout(() => say(cfg.lines[0]), 900);
+    }
+    function hide() {
+      root.classList.add("bye"); root.classList.remove("in"); closeChat(); bubble.classList.remove("show");
+      try { sessionStorage.setItem("allieHidden", "1"); } catch {}
+      setTimeout(() => tab.classList.add("show"), 450);
+    }
+    if (hidden()) tab.classList.add("show"); else setTimeout(() => show(true), APPEAR_MS);
+    setInterval(() => {
+      if (!root.classList.contains("in")) return;
+      nextPose();
+      lineIx = (lineIx + 1) % cfg.lines.length;
+      say(cfg.lines[lineIx]);
+    }, POSE_CYCLE_MS);
+    $(".allie-close", root).onclick = hide;
+    tab.onclick = () => { try { sessionStorage.removeItem("allieHidden"); } catch {} show(false); openChat(); };
+
+    // Step aside on small screens while someone types in a page field (she'd cover it).
+    const pageField = (el) => el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && !root.contains(el);
+    document.addEventListener("focusin", (e) => { if (window.innerWidth <= 680 && pageField(e.target)) root.classList.add("form-focus"); });
+    document.addEventListener("focusout", (e) => { if (pageField(e.target)) root.classList.remove("form-focus"); });
+
+    // ----- chat (Allie's brain is the studio concierge on the server) -----
     const msgs = [];
     function addMsg(role, text) {
-      const t = $(".thread", panel);
       const d = document.createElement("div");
-      d.className = `msg ${role === "user" ? "me" : "ai"}`;
+      d.className = `ac-msg ${role === "user" ? "user" : "bot"}`;
       const m = String(text).match(/\[\[studio:(\w+)\|([^\]]*)\]\]/);
-      const clean = String(text).replace(/\[\[studio:[^\]]*\]\]/g, "").trim();
-      d.textContent = clean;
+      d.textContent = String(text).replace(/\[\[studio:[^\]]*\]\]/g, "").trim();
       if (m && window.STUDIO_BY_ID?.[m[1]]) {
         const a = document.createElement("a");
         a.className = "allie-go";
@@ -309,35 +390,41 @@
         a.textContent = `Open ${STUDIO_BY_ID[m[1]].name} →`;
         d.appendChild(document.createElement("br")); d.appendChild(a);
       }
-      t.appendChild(d); t.scrollTop = t.scrollHeight;
+      msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+    function setChips(list) {
+      chipsEl.innerHTML = "";
+      list.forEach((c) => { const b = document.createElement("button"); b.type = "button"; b.className = "ac-chip"; b.textContent = c; b.onclick = () => ask(c); chipsEl.appendChild(b); });
     }
     async function ask(text) {
+      if (!store.get(LS.token)) { gate(); return; }
+      setChips([]);
       msgs.push({ role: "user", content: text }); addMsg("user", text);
-      const t = $(".thread", panel);
-      const typing = document.createElement("div"); typing.className = "msg ai"; typing.textContent = "…"; t.appendChild(typing);
+      const typing = document.createElement("div"); typing.className = "ac-msg bot typing"; typing.innerHTML = "<span></span><span></span><span></span>";
+      msgsEl.appendChild(typing); msgsEl.scrollTop = msgsEl.scrollHeight;
       try {
         const d = await api("/api/concierge", { messages: msgs });
         typing.remove(); msgs.push({ role: "assistant", content: d.reply }); addMsg("assistant", d.reply);
-      } catch (e) { typing.textContent = e.message; }
+      } catch (e) { typing.remove(); addMsg("assistant", e.message); }
     }
-    function open(prefill) {
+    function openChat(prefill) {
       if (!store.get(LS.token)) { gate(); return; }
-      if (!panel) {
-        panel = document.createElement("div");
-        panel.className = "allie-panel";
-        panel.innerHTML = `<header><img src="assets/img/allie-avatar-sm.jpg" alt=""><div><b>Allie</b><small>Your BizConnect Studio concierge</small></div><button aria-label="Close">×</button></header>
-          <div class="thread"></div>
-          <form><input class="input" placeholder="Tell me what you want to make…" maxlength="500"><button class="btn btn-primary btn-sm">Send</button></form>`;
-        document.body.appendChild(panel);
-        $("header button", panel).onclick = () => panel.classList.add("hidden");
-        $("form", panel).onsubmit = (e) => { e.preventDefault(); const i = $("input", panel); if (i.value.trim()) { ask(i.value.trim()); i.value = ""; } };
+      show(false);
+      bubble.classList.remove("show");
+      chat.classList.add("open"); figure.classList.add("chatting");
+      if (!msgsEl.childElementCount) {
         addMsg("assistant", `Hi${user?.name ? " " + user.name.split(" ")[0] : ""}! I'm Allie. Tell me what you're trying to make (a flyer, a video, an email, anything) and I'll point you to the right studio.`);
+        setChips(["Make a flyer for my event", "Write a follow-up email", "Create a short promo video", "Build a brand kit"]);
       }
-      panel.classList.remove("hidden");
-      if (prefill) ask(prefill); else $("input", panel).focus();
+      if (typeof prefill === "string" && prefill) ask(prefill); else setTimeout(() => input.focus(), 250);
     }
-    fab.onclick = () => (panel && !panel.classList.contains("hidden") ? panel.classList.add("hidden") : open());
-    window.BCAI.askAllie = open;
+    function closeChat() { chat.classList.remove("open"); figure.classList.remove("chatting"); }
+    figure.onclick = () => (chat.classList.contains("open") ? closeChat() : openChat());
+    figure.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); figure.onclick(); } };
+    bubble.onclick = () => openChat();
+    $(".ac-close", root).onclick = closeChat;
+    form.onsubmit = (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { ask(v); input.value = ""; } };
+    window.BCAI.askAllie = openChat;
   }
 
   window.BCAI = { api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, allie };

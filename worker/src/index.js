@@ -148,6 +148,22 @@ async function falSubmit(env, endpoint, input) {
   if (!r.ok) throw new Error(falErr(body, r.status));
   return body; // { request_id, status_url, response_url, ... }
 }
+// Upload a file to fal's CDN and return its URL (used for voice recordings).
+async function falUpload(env, bytes, contentType) {
+  const ext = (contentType.split("/")[1] || "bin").split(/[;+]/)[0].replace("mpeg", "mp3");
+  const init = await fetch("https://rest.alpha.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3", {
+    method: "POST",
+    headers: { Authorization: `Key ${falKey(env)}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ content_type: contentType, file_name: `voice-${rid()}.${ext}` }),
+  });
+  if (!init.ok) throw new Error(`upload init ${init.status}`);
+  const { upload_url, file_url } = await init.json();
+  if (!upload_url || !file_url) throw new Error("upload init: missing urls");
+  const put = await fetch(upload_url, { method: "PUT", headers: { "Content-Type": contentType }, body: bytes });
+  if (!put.ok) throw new Error(`upload put ${put.status}`);
+  return file_url;
+}
+
 function falErr(body, status) {
   const d = body?.detail;
   const msg = typeof d === "string" ? d : Array.isArray(d) ? d.map((x) => x.msg || JSON.stringify(x)).join("; ") : body?.error || body?.message;
@@ -469,6 +485,54 @@ async function route(req, env, url, ctx) {
     const id = rid();
     await kvPut(env, `up:${id}`, { ct: m[1], b64: m[2] }, { expirationTtl: 60 * 60 * 24 * 3 });
     return json({ url: `${url.origin}/u/${id}` });
+  }
+
+  if (p === "/api/transcribe" && method === "POST") {
+    // Voice input for every text box: browser records audio, Whisper (fal.ai Wizper) turns it into text. Free to members.
+    const b = await req.json().catch(() => ({}));
+    if (b.warm) {
+      // Called the moment someone taps the mic, so the speech model is awake by the time they finish talking.
+      ctx.waitUntil(falSync(env, "fal-ai/wizper", { audio_url: `${url.origin}/silence.wav`, task: "transcribe", language: "en" }).catch(() => {}));
+      return json({ ok: true });
+    }
+    const m = String(b.dataUrl || "").match(/^data:(audio\/[\w.+-]+|video\/webm|video\/mp4)(?:;[^,]*)?;base64,(.+)$/);
+    if (!m) return fail(400, "No recording came through. Please try again.");
+    if (m[2].length > 5_500_000) return fail(400, "That recording is too long. Please keep it under 90 seconds.");
+    // Fair-use limit: 60 voice clips per member per hour.
+    const hourKey = `mic:${handle}:${new Date().toISOString().slice(0, 13)}`;
+    const used = num(await env.STUDIO_KV.get(hourKey), 0);
+    if (used >= 60) return fail(429, "You've used voice input a lot this hour. Please type for a bit, or try again later.");
+    await env.STUDIO_KV.put(hourKey, String(used + 1), { expirationTtl: 60 * 60 * 2 });
+    const ct = m[1].startsWith("video/") ? m[1].replace("video/", "audio/") : m[1];
+    const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+    // Upload to fal's own storage (fastest for fal to read); fall back to serving it from KV.
+    let audio_url = await falUpload(env, bytes, ct).catch(() => null);
+    let kvId = null;
+    if (!audio_url) {
+      kvId = rid();
+      await kvPut(env, `up:${kvId}`, { ct, b64: m[2] }, { expirationTtl: 60 * 30 });
+      audio_url = `${url.origin}/u/${kvId}`;
+    }
+    const lang = /^[a-z]{2}$/.test(String(b.lang || "")) ? b.lang : undefined;
+    const input = { audio_url, task: "transcribe", ...(lang ? { language: lang } : {}) };
+    // Race two engines and take the first good answer: Whisper (free, sometimes queued) vs ElevenLabs Scribe (fast, ~$0.03/min).
+    const errs = [];
+    const secs = Math.max(1, bytes.length / 16000); // rough duration for spend accounting
+    const race = [
+      falSync(env, "fal-ai/wizper", input).then((r) => ({ text: r?.text ?? "", by: "wizper" })),
+      falSync(env, "fal-ai/elevenlabs/speech-to-text", { audio_url, diarize: false, tag_audio_events: false, ...(lang ? { language_code: { en: "eng", es: "spa", fr: "fra", de: "deu", pt: "por", it: "ita" }[lang] } : {}) })
+        .then((r) => ({ text: r?.text ?? "", by: "scribe" })),
+    ].map((p) => p.catch((e) => { errs.push(e.message); throw e; }));
+    let text = null, by = null;
+    try { ({ text, by } = await Promise.any(race)); } catch {}
+    if (text === null) {
+      try { text = (await falSync(env, "fal-ai/whisper", input))?.text ?? ""; by = "whisper"; } catch (e) { errs.push(e.message); }
+    }
+    ctx.waitUntil(addSpend(env, (secs / 60) * 0.03));
+    if (kvId) ctx.waitUntil(env.STUDIO_KV.delete(`up:${kvId}`));
+    if (errs.length) ctx.waitUntil(kvPut(env, "log:mic-last-error", { at: new Date().toISOString(), via: kvId ? "kv" : "fal-storage", errs }));
+    if (text === null) return fail(502, "Voice didn't go through. Your words are still there. Please try again.");
+    return json({ text: String(text).replace(/\s+/g, " ").trim(), by });
   }
 
   if (p === "/api/topup" && method === "POST") {

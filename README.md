@@ -20,6 +20,8 @@ Browser (GitHub Pages: /docs)  ──►  Cloudflare Worker (/worker)  ──►
   - The Worker enforces a daily fal.ai spend cap (`DAILY_CAP_USD`).
   - Failed renders are refunded automatically.
 - **Referrals.** A referrer earns `REF_SHARE` (10%) of their referrals' credit purchases. There's no pay-to-join and no pay for holding credits.
+- **Voice input.** Every text box has a 🎤 button (`docs/assets/mic.js`). Words appear live where the browser supports it, then `/api/transcribe` returns a Whisper transcript (fal Wizper, raced against ElevenLabs Scribe). It stops automatically when you pause, Esc cancels, and Undo is offered.
+- **Allie.** The full-size guide from the main BizConnect site: poses, bob, speech bubbles and an X to hide her (with an "Ask Allie" tab to bring her back). Her chat is the studio concierge.
 - **Payments.** Top-ups are **demo-only** (no charge). Plug a real checkout such as Stripe into `/api/topup`.
 
 ## Layout
@@ -60,7 +62,7 @@ Secrets are set once and never committed: `FAL_KEY` (fal.ai API key) and `STUDIO
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/catalog` | Engines and prices (public) |
-| POST | `/api/login` | `{name, handle, passcode, ref?}` → session token |
+| POST | `/api/login` | `{name, email, passcode, ref?}` → session token (every sign-in is logged to the Google Sheet) |
 | GET | `/api/me` | Wallet, referrals, today's spend |
 | POST | `/api/generate` | `{studio, engine, prompt, options}` → result, or `jobId` for video/avatar/music |
 | GET | `/api/job/:id` | Poll a render; refunds on failure |
@@ -68,3 +70,4 @@ Secrets are set once and never committed: `FAL_KEY` (fal.ai API key) and `STUDIO
 | POST | `/api/upload` | Photo for image-to-video or a custom avatar presenter |
 | POST | `/api/topup` | Demo credit packs (no payment) |
 | POST | `/api/concierge` | Allie, the studio guide |
+| POST | `/api/transcribe` | `{dataUrl, lang?}` → `{text}` (voice input; `{warm:true}` pre-warms the model) |
