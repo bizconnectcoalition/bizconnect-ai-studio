@@ -18,8 +18,8 @@ Independent reviews: cold-start comprehension, follow-the-guide (built a third t
 ## D-006 · 2026-10-23 · Client brands live only in the client's repo (DECIDED)
 The core repo carries only the `bizconnect` brand (the starter template is in `tools/brand-template/`, not served). The Worker's `BRANDS` list does name each client, because the shared back end must know them. Root & Bloom's brand files live in `ai-studio-clients\rootbloom-ai-studio\docs\brands\rootbloom\`. **Why:** the BizConnect repo and site are public, so client logos and wording would otherwise be published on BizConnect's site. Clients also get their own repo history. **Cost:** a core change has to be synced into each client (`tools\sync-client.ps1`).
 
-## D-005 · 2026-10-23 · Root & Bloom hosted under GitHub `dshenterpriseinc` (DECIDED for now)
-It was the only GitHub account set up on Dan's PC for both creating and pushing a new repo. **Can change:** GitHub → repo Settings → Transfer ownership to `bizconnectcoalition` (or the client's own account). The Pages URL changes with it.
+## D-005 · 2026-10-23 · Root & Bloom hosted under GitHub `bizconnectcoalition` (DECIDED)
+Dan chose to keep client studios under the BizConnect GitHub account: `bizconnectcoalition/rootbloom-ai-studio`, pushed with its own deploy key (one key per repo, the same pattern as the core). A client can later get the repo transferred to its own account; the Pages URL changes with it.
 
 ## D-004 · 2026-10-23 · Back end for client studios (OPEN)
 Today every studio shares one Worker, one passcode, one daily cap, one wallet store and one fal.ai bill. The Worker knows each brand's voice through `BRANDS`. Options before a client goes public:
