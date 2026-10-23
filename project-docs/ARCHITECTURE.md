@@ -13,10 +13,10 @@ Client site (GitHub Pages, static)            Shared Worker (Cloudflare)        
 2. `docs/brand.js` (the **loader**) holds `DEFAULT_BRAND`. It writes two tags while the page is still loading: `brands/<id>/brand.css` (the `:root` color and font tokens, plus any small brand tweaks) and `brands/<id>/brand.js` (which sets `window.BRAND`).
    On localhost only, `?brand=<id>` previews another brand folder that exists in the same `docs/`.
 3. At the end of `<body>`: `assets/studios.js` builds `window.STUDIOS` from the core list plus `BRAND.studios` overrides (and `hide`). `assets/app.js` fills every `[data-brand]` / `[data-brand-html]` element, the title, description and favicon, then provides header, footer, sign-in box and guide from `BRAND`.
-4. `tools/sync-client.ps1` copies the core into a client folder and rewrites `DEFAULT_BRAND`. The client's `docs/brands/<id>/` is never touched by the sync.
+4. `tools/sync-client.ps1` copies the core into a client folder and rewrites `DEFAULT_BRAND`. The client's `docs/brands/<id>/` is never touched by the sync. It records `docs/CORE_VERSION.txt` (core commit) and `docs/CORE_FILES.txt` (hashes), refuses to overwrite core files that were hand-edited in the client, and `-Check` reports which clients are behind.
 
 ### Brand file fields
-See `docs/brands/_template/brand.js` (every field explained) and `docs/brands/_template/brand.css` (every token explained). Required: `id`, `api`, `productName`, `logo`, the `:root` tokens. Everything else has a default.
+See `tools/brand-template/brand.js` (every field explained) and `tools/brand-template/brand.css` (every token explained). New core fields must always be **optional with a default**, so older client brand files keep working. Required: `id`, `api`, `productName`, `logo`, the `:root` tokens. Everything else has a default.
 
 ### CSS tokens
 `--bg-950…--bg-600` (canvas and panels), `--ink`, `--accent`, `--accent-hi/-glow/-deep`, `--text`, `--text-dim`, `--slate`, `--slate-dim`, `--green`, `--red`, `--line`, `--line-soft`, `--card`, fonts `--serif`, `--serif-2`, `--sans`, `--mono`, and RGB triplets for tints (`--accent-rgb`, `--accent-hi-rgb`, `--text-rgb`, `--slate-rgb`, `--bg-950-rgb`, `--bg-700-rgb`, `--bg-600-rgb`, `--bg-raise-rgb`, `--ink-rgb`, `--overlay-rgb`). The design is built for **dark** canvases; a light theme needs core work (see VISION.md).
@@ -37,10 +37,4 @@ All studios share **one** passcode, **one** daily spend cap, **one** KV store (a
 `user:<email>` (name, credits, referral code, referrer, purchases, brand), `refs:<email>`, `refcode:<code>`, `hist:<email>` (last 80 creations), `job:<id>`, `spend:<date>`, `log:logins`, short-lived uploads `up:<id>`.
 
 ## Accounts and hosting
-| Thing | Account |
-|---|---|
-| BizConnect studio repo | GitHub `bizconnectcoalition` (SSH alias `github-bizconnect-ai-studio`, a deploy key for this repo only) |
-| Root & Bloom repo | GitHub `dshenterpriseinc` (SSH alias `github-dshenterpriseinc`). Can be transferred to another owner later |
-| Worker + KV | Cloudflare, virtualecommerceinc@gmail.com (`npx wrangler` is logged in on Dan's PC) |
-| AI | fal.ai (key stored only as the Worker secret `FAL_KEY`) |
-| Sign-in log | Google Sheet "BizConnect AI Studio - Logins" via `sheets/LoginTracker.gs` |
+The BizConnect repo is GitHub `bizconnectcoalition/bizconnect-ai-studio`. Each client repo is listed in `..\ai-studio-clients\README.md`. The Worker and KV are on Cloudflare, the AI on fal.ai (key only as the Worker secret `FAL_KEY`), and the sign-in log in a Google Sheet via `sheets/LoginTracker.gs`. Which accounts and logins own these is in the git-ignored `PRIVATE_NOTES.md` (local only).

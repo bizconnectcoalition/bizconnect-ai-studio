@@ -4,7 +4,10 @@
 (function () {
   "use strict";
   const B = window.BRAND;
-  if (!B) throw new Error("No brand loaded: check docs/brand.js and docs/brands/<id>/brand.js");
+  if (!B) {
+    document.body.innerHTML = `<p style="font:16px sans-serif;padding:40px;color:#333;background:#fff">This studio's brand settings didn't load (looked for <code>${String(window.BRAND_BASE || "brands/?/")}brand.js</code>). Check DEFAULT_BRAND in docs/brand.js.</p>`;
+    throw new Error("No brand loaded: check docs/brand.js and docs/brands/<id>/brand.js");
+  }
   const asset = (p) => (p ? (window.BRAND_BASE || "") + p : "");
   const API = B.api;
   const LS = { token: "bcai_token", user: "bcai_user", ref: "bcai_ref" };
@@ -18,6 +21,7 @@
     const desc = document.querySelector('meta[name="description"]');
     if (desc && B.description) desc.content = B.description;
     if (B.favicon) { const l = document.createElement("link"); l.rel = "icon"; l.href = asset(B.favicon); document.head.appendChild(l); }
+    if (B.noindex) { const m = document.createElement("meta"); m.name = "robots"; m.content = "noindex, nofollow"; document.head.appendChild(m); } // previews: stay out of search results
     document.querySelectorAll("[data-brand]").forEach((el) => (el.textContent = pick(el.dataset.brand) ?? ""));
     document.querySelectorAll("[data-brand-html]").forEach((el) => (el.innerHTML = pick(el.dataset.brandHtml) ?? "")); // brand files are ours, not user input
   }
@@ -309,6 +313,8 @@
     d.className = "usein";
     d.innerHTML = `<summary class="tool">${ICO.wand}<span>Use this in…</span></summary><div class="usein-menu"></div>`;
     const menu = $(".usein-menu", d);
+    targets = targets.filter(([studio]) => window.STUDIO_BY_ID?.[studio]); // skip studios this brand hides
+    if (!targets.length) return document.createComment("no targets");
     targets.forEach(([studio, label, text]) => {
       const a = document.createElement("a");
       a.href = `studio.html?s=${studio}&p=${encodeURIComponent(String(text).slice(0, 1400))}`;
@@ -576,6 +582,7 @@
         <div class="err hidden" id="g-err"></div>
         <button class="btn btn-primary" type="submit">Enter the Studio</button>
         <p class="muted" style="font-size:12px;text-align:center">New accounts start with free credits. Returning? Sign in with the same email.</p>
+        ${g.note ? `<p class="muted" style="font-size:11.5px;text-align:center">${esc(g.note)}</p>` : ""}
       </div></form>`;
     document.body.appendChild(ov);
     const form = $("form", ov);
@@ -599,7 +606,7 @@
   }
 
   // ---------------- the guide: floating helper + concierge chat (BRAND.guide) ----------------
-  // With poses: a full-size figure that bobs and cross-fades poses (BizConnect's Allie).
+  // With poses: a full-size figure that bobs and cross-fades poses.
   // Without poses: a compact round avatar button with the same bubble and chat.
   function guide() {
     const G = B.guide;
@@ -609,7 +616,8 @@
     const compact = !poses.length;
     const pages = G.pages || {};
     const page = location.pathname.split("/").pop() || "index.html";
-    const cfg = pages[page] || pages["index.html"] || { pose: 0, lines: [`Hi, I'm ${name}! Tell me what you want to make.`] };
+    const cfg0 = pages[page] || pages["index.html"] || {};
+    const cfg = { pose: cfg0.pose || 0, lines: cfg0.lines?.length ? cfg0.lines : [`Hi, I'm ${name}! Tell me what you want to make.`] };
     const POSE_CYCLE_MS = 22000, APPEAR_MS = 4000, BUBBLE_MS = 9000;
     let poseIx = Math.min(cfg.pose || 0, Math.max(0, poses.length - 1)), lineIx = 0, frontIsA = true, bubbleTimer = null;
     const hidden = () => { try { return sessionStorage.getItem("guideHidden") === "1"; } catch { return false; } };
@@ -628,12 +636,12 @@
       <div class="guide-bubble" aria-live="polite"></div>
       <button class="guide-close" type="button" aria-label="Hide ${esc(name)}" title="Hide ${esc(name)}">&times;</button>
       <div class="guide-figure" role="button" tabindex="0" aria-label="Chat with ${esc(name)}" title="Click to chat with ${esc(name)}">
-        ${compact ? `<img class="guide-img on" src="${esc(asset(G.avatar))}" alt="${esc(name)}">` : `<img class="guide-img on" alt=""><img class="guide-img" alt="">`}
+        ${compact ? (G.avatar ? `<img class="guide-img on" src="${esc(asset(G.avatar))}" alt="${esc(name)}">` : `<span class="guide-initial">${esc(name.slice(0, 1))}</span>`) : `<img class="guide-img on" alt=""><img class="guide-img" alt="">`}
       </div>`;
     const tab = document.createElement("button");
     tab.className = "guide-tab";
     tab.type = "button";
-    tab.innerHTML = `<img src="${esc(asset(G.avatar))}" alt=""> Ask ${esc(name)}`;
+    tab.innerHTML = `${G.avatar ? `<img src="${esc(asset(G.avatar))}" alt=""> ` : ""}Ask ${esc(name)}`;
     tab.setAttribute("aria-label", `Show ${name}, your studio guide`);
     document.body.appendChild(root);
     document.body.appendChild(tab);

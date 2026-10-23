@@ -1,5 +1,5 @@
 /* <Business> AI Studio — brand settings (TEMPLATE: copy this folder, then edit every value).
-   Step-by-step guide: project-docs/WHITE_LABEL.md. Image paths are relative to this folder.
+   Step-by-step guide: project-docs/WHITE_LABEL.md. Image paths are relative to the brand folder.
    Only id, api, productName and logo are required; everything else falls back to a sensible default. */
 window.BRAND = {
   id: "acme",                           // REQUIRED. Lowercase, = this folder's name. Add the same id to BRANDS in worker/src/index.js
@@ -14,16 +14,18 @@ window.BRAND = {
   favicon: "img/favicon.svg",           // browser-tab icon
 
   pageTitle: "Acme AI Studio — Every AI tool, one simple place",
-  description: "One-sentence description for search engines and link previews.",
+  description: "TODO: one sentence for link previews.",
+  noindex: true,                        // keep search engines away until the business approves the site (delete when live for real)
   hero: {                               // the home page's headline block
     eyebrow: "Acme · AI Studio",
     titleHtml: "Every AI tool your business needs.<br><em>One simple studio.</em>", // <em> = accent color
-    lead: "Two sentences in the customer's own words about what they can make here.",
+    lead: "TODO: two sentences in the customer's own words about what they can make here.",
   },
-  footer: "© {year} Acme Co. · Acme AI Studio (preview)", // {year} = current year
+  footer: "Preview prototype prepared for Acme Co.", // {year} = current year. Don't claim the business's copyright until they approve
   gate: {                               // the sign-in box
     intro: "Acme AI Studio is in private preview. Enter the access passcode to start creating.",
-    invited: "You were invited by an Acme member. Welcome!", // shown when someone arrives through a referral link
+    invited: "You were invited by a fellow member. Welcome!", // shown when someone arrives through a referral link
+    note: "",                           // optional small print under the sign-in form (e.g. who stores members' data)
   },
   referral: {
     copied: "Link copied! Share it with your friends",

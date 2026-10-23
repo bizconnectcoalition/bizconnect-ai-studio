@@ -3,7 +3,7 @@
   "use strict";
   const { esc, $, svg } = BCAI;
   const qs = new URLSearchParams(location.search);
-  const id = STUDIO_BY_ID[qs.get("s")] ? qs.get("s") : "image";
+  const id = STUDIO_BY_ID[qs.get("s")] ? qs.get("s") : STUDIO_BY_ID.image ? "image" : STUDIOS[0].id; // a brand may hide studios
   const S = STUDIO_BY_ID[id];
   BCAI.header("studio");
   BCAI.footer();

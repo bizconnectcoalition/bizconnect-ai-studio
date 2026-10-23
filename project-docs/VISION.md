@@ -39,7 +39,7 @@ The studio isn't BizConnect-specific in substance. Any business with a community
 
 ## What's next (rough order)
 1. Root & Bloom feedback round, then adjustments.
-2. Pick a product name and domain (see `PRIVATE_NOTES.md` for the naming discussion).
+2. Pick a product name and domain (the shortlist is in the local private notes).
 3. Decide the back-end model for clients (see `DECISIONS.md`, D-004): one shared Worker vs. one Worker per business.
 4. Real payments (Stripe) in `/api/topup`.
 5. Per-client passcodes and spending caps (needed before a second client goes live to the public).

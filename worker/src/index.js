@@ -64,7 +64,10 @@ const BRANDS = {
   bizconnect: { product: "BizConnect AI Studio", about: "part of Biz Connect Coalition, a business-networking community", audience: "small-business owners and networkers", guide: "Allie", presenter: "allie-presenter.jpg" },
   rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Bloom", presenter: null },
 };
-const brandOf = (b) => (b && Object.hasOwn(BRANDS, b.brand) ? { id: b.brand, ...BRANDS[b.brand] } : { id: "bizconnect", ...BRANDS.bizconnect });
+const brandOf = (b) => {
+  const id = typeof b?.brand === "string" && Object.hasOwn(BRANDS, b.brand) ? b.brand : "bizconnect";
+  return { id, ...BRANDS[id] };
+};
 
 // ---------- helpers ----------
 const CORS = {
@@ -448,7 +451,8 @@ async function route(req, env, url, ctx) {
       const code = String(b.ref || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
       const refEmail = code ? await env.STUDIO_KV.get(`refcode:${code}`) : null;
       const refUser = refEmail && refEmail !== handle ? await getUser(env, refEmail) : null;
-      u = { handle, name, credits: cfg(env).starter, created: Date.now(), ref: refUser ? refEmail : null, earningsCents: 0, purchasedCents: 0, spentCredits: 0 };
+      // brand = the studio this member first joined through
+      u = { handle, name, credits: cfg(env).starter, created: Date.now(), ref: refUser ? refEmail : null, earningsCents: 0, purchasedCents: 0, spentCredits: 0, brand: brand.id };
       if (refUser) {
         const refs = await kvGet(env, `refs:${refEmail}`, []);
         refs.unshift({ handle, name, joined: Date.now(), purchasedCents: 0 });
@@ -460,7 +464,6 @@ async function route(req, env, url, ctx) {
     u.logins = (u.logins || 0) + 1;
     u.lastLogin = Date.now();
     await saveUser(env, u);
-    if (!u.brand) u.brand = brand.id; // the studio this member first joined through
     // The sheet's Event column shows which studio was used, e.g. "signup (rootbloom)"; BizConnect stays plain.
     ctx.waitUntil(logLogin(env, req, u, brand.id === "bizconnect" ? event : `${event} (${brand.id})`));
     return json({ token: await makeToken(env, handle), user: u });

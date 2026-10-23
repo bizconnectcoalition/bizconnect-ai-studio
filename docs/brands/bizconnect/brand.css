@@ -1,6 +1,6 @@
 /* BizConnect AI Studio — "Midnight Charter" theme.
    Shares tokens with the Biz Connect Coalition site: navy canvas · gold seal-work · Marcellus serif · IBM Plex.
-   Every token below is required (see docs/brands/_template/brand.css for what each one paints). */
+   Every token below is required (see tools/brand-template/brand.css for what each one paints). */
 @import url("https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap");
 :root{
   /* page and panel backgrounds, darkest to lightest */

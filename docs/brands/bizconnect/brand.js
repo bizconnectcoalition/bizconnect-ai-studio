@@ -1,6 +1,6 @@
 /* BizConnect AI Studio — brand settings.
    Every studio site reads ONE of these files. To make a studio for another business, copy
-   docs/brands/_template/ (see project-docs/WHITE_LABEL.md). Image paths are relative to this folder. */
+   tools/brand-template/ (see project-docs/WHITE_LABEL.md). Image paths are relative to this folder. */
 window.BRAND = {
   id: "bizconnect",                     // must match the folder name; sent to the back end with every request
   api: "https://bizconnect-ai-studio.virtualecommerceinc.workers.dev",

@@ -5,6 +5,7 @@
   BCAI.header("account");
   BCAI.footer();
   BCAI.guide();
+  document.title = `Wallet & Referrals — ${BCAI.brand.productName}`;
   const money = (c) => `$${(c / 100).toFixed(2)}`;
   const mask = (e) => { const [a, d] = String(e).split("@"); return d ? `${a.slice(0, 2)}•••@${d}` : ""; };
 

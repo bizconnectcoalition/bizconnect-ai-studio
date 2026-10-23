@@ -38,9 +38,9 @@ Browser (GitHub Pages: /docs)  ──►  Cloudflare Worker (/worker)  ──►
 | `docs/` | The front end GitHub Pages serves (`index.html`, `studio.html?s=<id>`, `account.html`) |
 | `docs/brand.js` | Brand loader: the one line that says which brand this site shows |
 | `docs/brands/bizconnect/` | BizConnect's brand: `brand.js` (words, guide, settings), `brand.css` (colors, fonts), `img/` |
-| `docs/brands/_template/` | Starting point for a new business |
 | `docs/assets/` | Shared core used by every brand (`app.js`, `app.css`, `studios.js`, `controls.js`…) |
-| `tools/sync-client.ps1` | Copies the shared core into a client studio folder |
+| `tools/sync-client.ps1` | Copies the shared core into a client studio folder (`-Check` lists clients that are behind) |
+| `tools/brand-template/` | Starting point for a new business's brand folder |
 | `worker/src/index.js` | Cloudflare Worker API, shared by every studio (`BRANDS` list near the top) |
 | `worker/wrangler.toml` | Worker config (KV binding, markup, cap, starter credits) |
 | `worker/public/` | Files the Worker serves publicly (default presenter photo) |
