@@ -56,6 +56,16 @@ const ENGINES = {
 };
 const QUEUED = new Set(["video", "avatar", "music"]);
 
+// ---------- brands (white-label studios that share this Worker) ----------
+// Each studio site sends its brand id as "brand" in every JSON body. Only ids listed here are honoured,
+// so nothing a page sends ever reaches a prompt; unknown or missing ids (older cached pages) use bizconnect.
+// presenter = default Talking Avatar photo in ./public (null = members must upload their own photo).
+const BRANDS = {
+  bizconnect: { product: "BizConnect AI Studio", about: "part of Biz Connect Coalition, a business-networking community", audience: "small-business owners and networkers", guide: "Allie", presenter: "allie-presenter.jpg" },
+  rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Bloom", presenter: null },
+};
+const brandOf = (b) => (b && Object.hasOwn(BRANDS, b.brand) ? { id: b.brand, ...BRANDS[b.brand] } : { id: "bizconnect", ...BRANDS.bizconnect });
+
 // ---------- helpers ----------
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -203,11 +213,11 @@ async function fetchSiteText(url) {
 // Each returns either { output, usd } (finished) or { queued: {...job}, usd } (still rendering).
 const ASPECT_TO_SIZE = { "1:1": "square_hd", "16:9": "landscape_16_9", "9:16": "portrait_16_9", "4:3": "landscape_4_3", "3:4": "portrait_4_3" };
 
-async function runStudio(env, origin, studio, eng, prompt, o) {
+async function runStudio(env, origin, studio, eng, prompt, o, brand = brandOf(null)) {
   switch (studio) {
     case "chat": {
       const hist = Array.isArray(o.messages) ? o.messages.slice(-12).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 6000) })) : [];
-      const system = { role: "system", content: `You are a helpful assistant inside BizConnect AI Studio, used by small-business owners and networkers. Be clear, practical and friendly. ${o.persona ? "Act as: " + String(o.persona).slice(0, 300) : ""}` };
+      const system = { role: "system", content: `You are a helpful assistant inside ${brand.product}, used by ${brand.audience}. Be clear, practical and friendly. ${o.persona ? "Act as: " + String(o.persona).slice(0, 300) : ""}` };
       const r = await llm(env, eng, [system, ...hist, { role: "user", content: prompt }], 1500);
       return { output: { type: "text", text: r.text }, usd: r.usd };
     }
@@ -293,7 +303,8 @@ async function runStudio(env, origin, studio, eng, prompt, o) {
       const tts = await falSync(env, voiceEng.endpoint, voiceEng.id === "elevenlabs" ? { text: prompt, voice } : { prompt, voice });
       const audioUrl = tts?.audio?.url;
       if (!audioUrl) throw new Error("Couldn't create the voice track. Please try again.");
-      const imageUrl = o.imageUrl || `${origin}/allie-presenter.jpg`;
+      if (!o.imageUrl && !brand.presenter) throw new Error("Add a photo of the presenter first.");
+      const imageUrl = o.imageUrl || `${origin}/${brand.presenter}`;
       const q = await falSubmit(env, eng.endpoint, { image_url: imageUrl, audio_url: audioUrl, resolution: eng.resolution });
       const secs = Math.max(3, Math.ceil(prompt.length / 14));
       return { queued: { q, outType: "video", meta: { audioUrl } }, usd: secs * eng.usd + (prompt.length / 1000) * voiceEng.usd };
@@ -429,6 +440,7 @@ async function route(req, env, url, ctx) {
     const name = String(b.name || "").trim().slice(0, 60);
     if (name.length < 2) return fail(400, "Please enter your name.");
     let u = await getUser(env, handle);
+    const brand = brandOf(b);
     let event = "login";
     if (!u) {
       event = "signup";
@@ -448,7 +460,9 @@ async function route(req, env, url, ctx) {
     u.logins = (u.logins || 0) + 1;
     u.lastLogin = Date.now();
     await saveUser(env, u);
-    ctx.waitUntil(logLogin(env, req, u, event));
+    if (!u.brand) u.brand = brand.id; // the studio this member first joined through
+    // The sheet's Event column shows which studio was used, e.g. "signup (rootbloom)"; BizConnect stays plain.
+    ctx.waitUntil(logLogin(env, req, u, brand.id === "bizconnect" ? event : `${event} (${brand.id})`));
     return json({ token: await makeToken(env, handle), user: u });
   }
 
@@ -565,6 +579,7 @@ async function route(req, env, url, ctx) {
     const prompt = String(b.prompt || "").trim().slice(0, studio === "translate" ? 8000 : 4000);
     if (!prompt) return fail(400, studio === "outreach" ? "Enter the prospect's website address." : "Type what you'd like to create first.");
     const o = b.options || {};
+    if (studio === "avatar" && !o.imageUrl && !brandOf(b).presenter) return fail(400, "Add a photo of the presenter first.");
     const estUsd = estimateUsd(studio, eng, o, prompt);
     const credits = toCredits(env, estUsd);
     if (user.credits < credits) return fail(402, `This needs ${credits} credits and you have ${user.credits}. Top up in your wallet.`, { needed: credits });
@@ -585,7 +600,7 @@ async function route(req, env, url, ctx) {
 
     let res;
     try {
-      res = await runStudio(env, url.origin, studio, eng, prompt, o);
+      res = await runStudio(env, url.origin, studio, eng, prompt, o, brandOf(b));
     } catch (e) {
       const u = await refund(credits, estUsd);
       return fail(502, e.message || "Something went wrong.", { credits: u.credits, refunded: credits });
@@ -645,7 +660,8 @@ async function route(req, env, url, ctx) {
     const est = 0.002;
     if ((await spentToday(env)) + est > cfg(env).cap) return fail(429, "I'm resting for today. The studio hit its demo limit.");
     const msgs = (Array.isArray(b.messages) ? b.messages : []).slice(-10).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) }));
-    const system = `You are Allie, the friendly concierge of BizConnect AI Studio (part of Biz Connect Coalition, a business-networking community). Help beginners pick the right studio and write a good first prompt. Studios (use these exact ids): chat (ask anything, write anything), image (pictures, flyers, product shots), voice (voiceovers), avatar (talking-head video from a script), video (short AI video clips), music (songs and background music), deck (slide presentations), translate (translate documents), outreach (outreach pack from a prospect's website), brand (brand kit: tagline, colors, bios, logo idea). Keep replies under 90 words, warm and plain-spoken. When you recommend a studio, end with a line exactly like: [[studio:image|A flyer for a Saturday car wash fundraiser, bold and fun]] using the studio id and a suggested prompt. Never discuss income or earnings claims.`;
+    const brand = brandOf(b);
+    const system = `You are ${brand.guide}, the friendly concierge of ${brand.product} (${brand.about}). Help beginners pick the right studio and write a good first prompt. Studios (use these exact ids): chat (ask anything, write anything), image (pictures, flyers, product shots), voice (voiceovers), avatar (talking-head video from a script), video (short AI video clips), music (songs and background music), deck (slide presentations), translate (translate documents), outreach (outreach pack from a prospect's website), brand (brand kit: tagline, colors, bios, logo idea). Keep replies under 90 words, warm and plain-spoken. When you recommend a studio, end with a line exactly like: [[studio:image|A flyer for a Saturday car wash fundraiser, bold and fun]] using the studio id and a suggested prompt. Never discuss income or earnings claims.`;
     try {
       const r = await llm(env, LLMS["gemini-flash"], [{ role: "system", content: system }, ...msgs], 400);
       await addSpend(env, r.usd || est);

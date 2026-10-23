@@ -1,10 +1,27 @@
-/* BizConnect AI Studio — shared app core (auth, wallet, pricing, generation, output rendering, Allie). */
+/* AI Studio — shared app core for every brand (auth, wallet, pricing, generation, output rendering, guide).
+   Everything brand-specific (names, logo, colours, guide, wording) comes from window.BRAND,
+   which docs/brand.js loads from docs/brands/<id>/brand.js. Never hard-code a business name here. */
 (function () {
   "use strict";
-  const API = "https://bizconnect-ai-studio.virtualecommerceinc.workers.dev";
+  const B = window.BRAND;
+  if (!B) throw new Error("No brand loaded: check docs/brand.js and docs/brands/<id>/brand.js");
+  const asset = (p) => (p ? (window.BRAND_BASE || "") + p : "");
+  const API = B.api;
   const LS = { token: "bcai_token", user: "bcai_user", ref: "bcai_ref" };
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pick = (path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), B);
+
+  // Fill the page from the brand: <title>, description, favicon and any [data-brand]/[data-brand-html] element.
+  function applyBrand() {
+    if (B.pageTitle && /^(AI Studio)?$/.test(document.title)) document.title = B.pageTitle;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc && B.description) desc.content = B.description;
+    if (B.favicon) { const l = document.createElement("link"); l.rel = "icon"; l.href = asset(B.favicon); document.head.appendChild(l); }
+    document.querySelectorAll("[data-brand]").forEach((el) => (el.textContent = pick(el.dataset.brand) ?? ""));
+    document.querySelectorAll("[data-brand-html]").forEach((el) => (el.innerHTML = pick(el.dataset.brandHtml) ?? "")); // brand files are ours, not user input
+  }
+  applyBrand();
   const svg = (paths, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -23,7 +40,8 @@
     const headers = { "Content-Type": "application/json" };
     const t = store.get(LS.token);
     if (t) headers.Authorization = `Bearer ${t}`;
-    const r = await fetch(API + path, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify(body) : undefined });
+    // every POST carries the brand id so the shared back end can speak in this brand's voice
+    const r = await fetch(API + path, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify({ ...body, brand: B.id }) : undefined });
     const data = await r.json().catch(() => ({ error: "Unexpected response from the studio." }));
     if (r.status === 401 && data.signin) { signOut(false); gate(); }
     if (!r.ok) { const e = new Error(data.error || `Request failed (${r.status})`); e.data = data; e.status = r.status; throw e; }
@@ -266,7 +284,7 @@
           kids.push(new D.Paragraph({ children: [new D.TextRun(line.replace(/^\s*•\s+/, ""))], ...(bullet ? { bullet: { level: 0 } } : {}) }));
         }
       }
-      const blob = await D.Packer.toBlob(new D.Document({ creator: "BizConnect AI Studio", title, sections: [{ children: kids }] }));
+      const blob = await D.Packer.toBlob(new D.Document({ creator: B.productName, title, sections: [{ children: kids }] }));
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${filename}.docx`; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       flash(btn, "Saved! Check your Downloads");
@@ -318,16 +336,16 @@
     }
     const p = new window.PptxGenJS();
     p.layout = "LAYOUT_WIDE";
-    const navy = "0E1B33", gold = "C6972F", ivory = "F7F6F2";
-    const t = p.addSlide(); t.background = { color: navy };
-    t.addText(deck.title || "Presentation", { x: 0.8, y: 2.3, w: 11.7, h: 1.2, fontFace: "Georgia", fontSize: 40, color: ivory });
-    t.addText(deck.subtitle || "", { x: 0.8, y: 3.5, w: 11.7, h: 0.8, fontSize: 20, color: gold });
+    const X = { bg: "0E1B33", accent: "C6972F", title: "F7F6F2", body: "DDE0E6", ...(B.exportColors || {}) };
+    const t = p.addSlide(); t.background = { color: X.bg };
+    t.addText(deck.title || "Presentation", { x: 0.8, y: 2.3, w: 11.7, h: 1.2, fontFace: "Georgia", fontSize: 40, color: X.title });
+    t.addText(deck.subtitle || "", { x: 0.8, y: 3.5, w: 11.7, h: 0.8, fontSize: 20, color: X.accent });
     (deck.slides || []).forEach((s, i) => {
-      const sl = p.addSlide(); sl.background = { color: navy };
-      sl.addText(String(i + 1).padStart(2, "0"), { x: 0.8, y: 0.45, w: 2, h: 0.4, fontSize: 12, color: gold });
-      sl.addText(s.title || "", { x: 0.8, y: 0.8, w: 11.7, h: 1, fontFace: "Georgia", fontSize: 30, color: ivory });
-      sl.addShape(p.ShapeType.line, { x: 0.8, y: 1.85, w: 3, h: 0, line: { color: gold, width: 1.5 } });
-      sl.addText((s.bullets || []).map((b) => ({ text: b, options: { bullet: true } })), { x: 0.8, y: 2.1, w: 11.7, h: 4.6, fontSize: 20, color: "DDE0E6", paraSpaceAfter: 10, valign: "top" });
+      const sl = p.addSlide(); sl.background = { color: X.bg };
+      sl.addText(String(i + 1).padStart(2, "0"), { x: 0.8, y: 0.45, w: 2, h: 0.4, fontSize: 12, color: X.accent });
+      sl.addText(s.title || "", { x: 0.8, y: 0.8, w: 11.7, h: 1, fontFace: "Georgia", fontSize: 30, color: X.title });
+      sl.addShape(p.ShapeType.line, { x: 0.8, y: 1.85, w: 3, h: 0, line: { color: X.accent, width: 1.5 } });
+      sl.addText((s.bullets || []).map((b) => ({ text: b, options: { bullet: true } })), { x: 0.8, y: 2.1, w: 11.7, h: 4.6, fontSize: 20, color: X.body, paraSpaceAfter: 10, valign: "top" });
       if (s.notes) sl.addNotes(s.notes);
     });
     await p.writeFile({ fileName: `${(deck.title || "deck").replace(/[^\w\- ]+/g, "").slice(0, 50)}.pptx` });
@@ -367,7 +385,7 @@
     el.innerHTML = `<div class="out"><div class="out-meta"><span>${esc(item.engineLabel || "")} · ${item.credits} credits · ${when}</span></div><div class="body"></div><div class="result-tools"><div class="actions"></div><p class="tools-note muted"></p></div></div>`;
     const body = $(".body", el), actions = $(".actions", el), note = $(".tools-note", el);
     const add = (b) => actions.appendChild(b);
-    const base = slug(item.prompt) || "bizconnect";
+    const base = slug(item.prompt) || B.fileName || "creation";
 
     if (o.type === "text") {
       const secs = sections(o.text);
@@ -391,7 +409,7 @@
       add(tool("copy", secs.length ? "Copy everything" : "Copy text", (b) => copyText(clean, b, COPIED, textEl), "primary"));
       const site = String(o.meta?.site || "").replace(/^www\./, "").split(".")[0];
       const docName = item.studio === "outreach" ? `outreach-pack-${slug(site) || "prospect"}` : item.studio === "translate" ? `translation-${slug(o.meta?.language) || "text"}` : base;
-      add(tool("doc", "Save as Word doc", (b) => saveWord(item.studio === "outreach" ? `Outreach pack: ${o.meta?.site || ""}` : STUDIO_BY_ID[item.studio]?.name || "BizConnect AI Studio", secs.length ? secs.map((s) => ({ heading: s.title, text: plain(s.body) })) : [{ text: clean }], docName, b)));
+      add(tool("doc", "Save as Word doc", (b) => saveWord(item.studio === "outreach" ? `Outreach pack: ${o.meta?.site || ""}` : STUDIO_BY_ID[item.studio]?.name || B.productName, secs.length ? secs.map((s) => ({ heading: s.title, text: plain(s.body) })) : [{ text: clean }], docName, b)));
       if (item.studio === "outreach") add(useIn([["translate", "Translate the pack", clean]]));
       else if (item.studio === "translate") add(useIn([["voice", "Turn it into a voiceover", clean], ["avatar", "Make a talking video", clean]]));
       else add(useIn([["voice", "Turn it into a voiceover", clean], ["avatar", "Make a talking video", clean], ["deck", "Make slides from it", clean], ["translate", "Translate it", clean]]));
@@ -442,7 +460,7 @@
       captionCard(item, body);
     } else if (o.type === "deck") {
       const d = o.deck;
-      body.innerHTML = `<div class="out-text" style="white-space:normal"><h2 style="font-family:var(--serif);font-weight:400;font-size:24px;color:var(--ivory)">${esc(d.title)}</h2><p class="muted">${esc(d.subtitle || "")}</p></div><div class="slides"></div>`;
+      body.innerHTML = `<div class="out-text" style="white-space:normal"><h2 style="font-family:var(--serif);font-weight:400;font-size:24px;color:var(--text)">${esc(d.title)}</h2><p class="muted">${esc(d.subtitle || "")}</p></div><div class="slides"></div>`;
       const grid = $(".slides", body);
       (d.slides || []).forEach((s, i) => {
         const card = document.createElement("div");
@@ -516,15 +534,15 @@
   }
 
   // ---------------- chrome: header, footer, gate ----------------
-  const CREST = "assets/img/bcc-logo.png";
   function header(active) {
     const el = document.createElement("header");
     el.className = "top";
+    const [big, small] = B.wordmark || [B.productName, ""];
     el.innerHTML = `<div class="wrap nav">
-      <a class="brand" href="index.html"><img src="${CREST}" alt="Biz Connect crest"><span class="brand-word"><b>BIZCONNECT</b><span>AI Studio</span></span></a>
+      <a class="brand" href="index.html"><img src="${esc(asset(B.logo))}" alt="${esc(B.logoAlt || B.productName)}"><span class="brand-word"><b>${esc(big)}</b><span>${esc(small)}</span></span></a>
       <nav class="nav-links">
         <a href="index.html" class="${active === "home" ? "active" : ""}">Studios</a>
-        <a href="studio.html?s=image" class="${active === "studio" ? "active" : ""}">Create</a>
+        <a href="studio.html?s=${window.STUDIO_BY_ID?.image ? "image" : esc(window.STUDIOS?.[0]?.id || "image")}" class="${active === "studio" ? "active" : ""}">Create</a>
         <a href="account.html" class="${active === "account" ? "active" : ""}">Wallet &amp; Referrals</a>
       </nav>
       <div class="nav-right">
@@ -536,7 +554,7 @@
   function footer() {
     const f = document.createElement("footer");
     f.className = "bot";
-    f.innerHTML = `<div class="wrap"><span>© ${new Date().getFullYear()} Biz Connect Coalition · BizConnect AI Studio (prototype)</span><span>Powered by leading AI models from Google, OpenAI, Anthropic, ElevenLabs and more · <a href="#" id="signout">Sign out</a></span></div>`;
+    f.innerHTML = `<div class="wrap"><span>${esc(String(B.footer || `© {year} ${B.productName}`).replace("{year}", new Date().getFullYear()))}</span><span>Powered by leading AI models from Google, OpenAI, Anthropic, ElevenLabs and more · <a href="#" id="signout">Sign out</a></span></div>`;
     document.body.appendChild(f);
     $("#signout", f).onclick = (e) => { e.preventDefault(); signOut(); };
   }
@@ -545,15 +563,16 @@
     const ov = document.createElement("div");
     ov.className = "overlay gate";
     const r = store.get(LS.ref);
+    const g = B.gate || {};
     ov.innerHTML = `<form class="modal" autocomplete="off">
-      <img class="crest" src="assets/img/bcc-crest.png" alt="">
+      <img class="crest" src="${esc(asset(B.crest || B.logo))}" alt="">
       <h2>Welcome to the Studio</h2>
-      <p>BizConnect AI Studio is in private preview. Enter the access passcode to start creating.</p>
+      <p>${esc(g.intro || `${B.productName} is in private preview. Enter the access passcode to start creating.`)}</p>
       <div class="stack">
         <div class="field"><label for="g-name">Your name</label><input class="input" id="g-name" placeholder="Jane Smith" autocomplete="name" required></div>
         <div class="field"><label for="g-email">Email</label><input class="input" id="g-email" type="email" placeholder="you@yourbusiness.com" autocomplete="email" required></div>
         <div class="field"><label for="g-pass">Access passcode</label><input class="input" id="g-pass" type="password" required></div>
-        ${r ? `<p class="notice">You were invited by a BizConnect member. Welcome!</p>` : ""}
+        ${r ? `<p class="notice">${esc(g.invited || "You were invited by a member. Welcome!")}</p>` : ""}
         <div class="err hidden" id="g-err"></div>
         <button class="btn btn-primary" type="submit">Enter the Studio</button>
         <p class="muted" style="font-size:12px;text-align:center">New accounts start with free credits. Returning? Sign in with the same email.</p>
@@ -568,7 +587,7 @@
         store.set(LS.token, d.token); setUser(d.user); ov.remove();
         document.dispatchEvent(new CustomEvent("bcai:signedin"));
       } catch (err) {
-        const g = $("#g-err"); g.textContent = err.message; g.classList.remove("hidden");
+        const ge = $("#g-err"); ge.textContent = err.message; ge.classList.remove("hidden");
         btn.disabled = false; btn.textContent = "Enter the Studio";
       }
     };
@@ -579,62 +598,60 @@
     else { gate(); document.addEventListener("bcai:signedin", fn, { once: true }); }
   }
 
-  // ---------------- Allie concierge (full-size, same look and motion as the main BizConnect site) ----------------
-  const ALLIE_POSES = [
-    { src: "assets/img/allie/allie-pose-wave.png", alt: "Allie waving hello" },
-    { src: "assets/img/allie/allie-pose-point.png", alt: "Allie pointing something out" },
-    { src: "assets/img/allie/allie-pose-welcome.png", alt: "Allie welcoming you with open arms" },
-    { src: "assets/img/allie/allie-pose-thumbsup.png", alt: "Allie giving a thumbs up" },
-    { src: "assets/img/allie/allie-pose-arms-crossed.png", alt: "Allie standing confidently" },
-    { src: "assets/img/allie/allie-pose-clipboard.png", alt: "Allie holding a clipboard, ready to help" },
-  ];
-  const ALLIE_PAGE = {
-    "index.html": { pose: 0, lines: ["Hi, I'm Allie! 👋 Not sure where to start? Tell me what you want to make.", "Tip: tap the 🎤 in any box and just talk. I'll type it for you."] },
-    "studio.html": { pose: 1, lines: ["Try an example prompt, then tweak it. That's the fastest way to learn.", "Want better results? Switch to a Premium engine on the left."] },
-    "account.html": { pose: 3, lines: ["Share your referral link and earn on every credit pack your referrals buy.", "Credits never expire, and there's no monthly fee."] },
-  };
-  function allie() {
+  // ---------------- the guide: floating helper + concierge chat (BRAND.guide) ----------------
+  // With poses: a full-size figure that bobs and cross-fades poses (BizConnect's Allie).
+  // Without poses: a compact round avatar button with the same bubble and chat.
+  function guide() {
+    const G = B.guide;
+    if (!G) return;
+    const name = G.name || "Guide";
+    const poses = (G.poses || []).map((p) => ({ src: asset(p.src), alt: p.alt || name }));
+    const compact = !poses.length;
+    const pages = G.pages || {};
     const page = location.pathname.split("/").pop() || "index.html";
-    const cfg = ALLIE_PAGE[page] || ALLIE_PAGE["index.html"];
+    const cfg = pages[page] || pages["index.html"] || { pose: 0, lines: [`Hi, I'm ${name}! Tell me what you want to make.`] };
     const POSE_CYCLE_MS = 22000, APPEAR_MS = 4000, BUBBLE_MS = 9000;
-    let poseIx = cfg.pose, lineIx = 0, frontIsA = true, bubbleTimer = null;
-    const hidden = () => { try { return sessionStorage.getItem("allieHidden") === "1"; } catch { return false; } };
+    let poseIx = Math.min(cfg.pose || 0, Math.max(0, poses.length - 1)), lineIx = 0, frontIsA = true, bubbleTimer = null;
+    const hidden = () => { try { return sessionStorage.getItem("guideHidden") === "1"; } catch { return false; } };
 
     const root = document.createElement("div");
-    root.className = "allie";
+    root.className = `guide${compact ? " compact" : ""}`;
     root.setAttribute("role", "complementary");
-    root.setAttribute("aria-label", "Allie, your BizConnect Studio guide");
+    root.setAttribute("aria-label", `${name}, ${G.label || "your studio guide"}`);
     root.innerHTML = `
-      <div class="allie-chat" role="dialog" aria-label="Chat with Allie">
-        <div class="ac-head"><span class="ac-dot"></span><b>Allie</b><span class="ac-sub">Studio concierge</span><button class="ac-close" type="button" aria-label="Close chat">&times;</button></div>
+      <div class="guide-chat" role="dialog" aria-label="Chat with ${esc(name)}">
+        <div class="ac-head"><span class="ac-dot"></span><b>${esc(name)}</b><span class="ac-sub">${esc(G.role || "Studio concierge")}</span><button class="ac-close" type="button" aria-label="Close chat">&times;</button></div>
         <div class="ac-msgs" aria-live="polite"></div>
         <div class="ac-chips"></div>
-        <form class="ac-input"><input type="text" placeholder="Tell me what you want to make…" aria-label="Ask Allie" maxlength="500"><button class="ac-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
+        <form class="ac-input"><input type="text" placeholder="Tell me what you want to make…" aria-label="Ask ${esc(name)}" maxlength="500"><button class="ac-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
       </div>
-      <div class="allie-bubble" aria-live="polite"></div>
-      <button class="allie-close" type="button" aria-label="Hide Allie" title="Hide Allie">&times;</button>
-      <div class="allie-figure" role="button" tabindex="0" aria-label="Chat with Allie" title="Click to chat with Allie">
-        <img class="allie-img on" alt=""><img class="allie-img" alt="">
+      <div class="guide-bubble" aria-live="polite"></div>
+      <button class="guide-close" type="button" aria-label="Hide ${esc(name)}" title="Hide ${esc(name)}">&times;</button>
+      <div class="guide-figure" role="button" tabindex="0" aria-label="Chat with ${esc(name)}" title="Click to chat with ${esc(name)}">
+        ${compact ? `<img class="guide-img on" src="${esc(asset(G.avatar))}" alt="${esc(name)}">` : `<img class="guide-img on" alt=""><img class="guide-img" alt="">`}
       </div>`;
     const tab = document.createElement("button");
-    tab.className = "allie-tab";
+    tab.className = "guide-tab";
     tab.type = "button";
-    tab.innerHTML = `<img src="assets/img/allie-avatar-sm.jpg" alt=""> Ask Allie`;
-    tab.setAttribute("aria-label", "Show Allie, your studio guide");
+    tab.innerHTML = `<img src="${esc(asset(G.avatar))}" alt=""> Ask ${esc(name)}`;
+    tab.setAttribute("aria-label", `Show ${name}, your studio guide`);
     document.body.appendChild(root);
     document.body.appendChild(tab);
 
-    const [imgA, imgB] = root.querySelectorAll(".allie-img");
-    const bubble = $(".allie-bubble", root), figure = $(".allie-figure", root), chat = $(".allie-chat", root);
+    const [imgA, imgB] = root.querySelectorAll(".guide-img");
+    const bubble = $(".guide-bubble", root), figure = $(".guide-figure", root), chat = $(".guide-chat", root);
     const msgsEl = $(".ac-msgs", root), chipsEl = $(".ac-chips", root), form = $(".ac-input", root), input = $("input", form);
     const applyPose = (img, p) => { img.src = p.src; img.alt = p.alt; };
-    applyPose(imgA, ALLIE_POSES[poseIx]);
-    ALLIE_POSES.forEach((p) => { const i = new Image(); i.src = p.src; });
+    if (!compact) {
+      applyPose(imgA, poses[poseIx]);
+      poses.forEach((p) => { const i = new Image(); i.src = p.src; });
+    }
 
     function nextPose() {
-      poseIx = (poseIx + 1) % ALLIE_POSES.length;
+      if (compact || poses.length < 2) return;
+      poseIx = (poseIx + 1) % poses.length;
       const front = frontIsA ? imgA : imgB, back = frontIsA ? imgB : imgA;
-      applyPose(back, ALLIE_POSES[poseIx]);
+      applyPose(back, poses[poseIx]);
       const go = () => { back.classList.add("on"); front.classList.remove("on"); frontIsA = !frontIsA; };
       if (back.complete) requestAnimationFrame(go); else back.onload = () => requestAnimationFrame(go);
     }
@@ -651,7 +668,7 @@
     }
     function hide() {
       root.classList.add("bye"); root.classList.remove("in"); closeChat(); bubble.classList.remove("show");
-      try { sessionStorage.setItem("allieHidden", "1"); } catch {}
+      try { sessionStorage.setItem("guideHidden", "1"); } catch {}
       setTimeout(() => tab.classList.add("show"), 450);
     }
     if (hidden()) setTimeout(() => tab.classList.add("show"), APPEAR_MS); else setTimeout(() => show(true), APPEAR_MS);
@@ -661,15 +678,15 @@
       lineIx = (lineIx + 1) % cfg.lines.length;
       say(cfg.lines[lineIx]);
     }, POSE_CYCLE_MS);
-    $(".allie-close", root).onclick = hide;
-    tab.onclick = () => { try { sessionStorage.removeItem("allieHidden"); } catch {} show(false); openChat(); };
+    $(".guide-close", root).onclick = hide;
+    tab.onclick = () => { try { sessionStorage.removeItem("guideHidden"); } catch {} show(false); openChat(); };
 
-    // Step aside on small screens while someone types in a page field (she'd cover it).
+    // Step aside on small screens while someone types in a page field (the guide would cover it).
     const pageField = (el) => el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && !root.contains(el);
     document.addEventListener("focusin", (e) => { if (window.innerWidth <= 680 && pageField(e.target)) root.classList.add("form-focus"); });
     document.addEventListener("focusout", (e) => { if (pageField(e.target)) root.classList.remove("form-focus"); });
 
-    // ----- chat (Allie's brain is the studio concierge on the server) -----
+    // ----- chat (the guide's brain is the studio concierge on the server) -----
     const msgs = [];
     function addMsg(role, text) {
       const d = document.createElement("div");
@@ -678,7 +695,7 @@
       d.textContent = String(text).replace(/\[\[studio:[^\]]*\]\]/g, "").trim();
       if (m && window.STUDIO_BY_ID?.[m[1]]) {
         const a = document.createElement("a");
-        a.className = "allie-go";
+        a.className = "guide-go";
         a.href = `studio.html?s=${m[1]}&p=${encodeURIComponent(m[2])}`;
         a.textContent = `Open ${STUDIO_BY_ID[m[1]].name} →`;
         d.appendChild(document.createElement("br")); d.appendChild(a);
@@ -706,8 +723,9 @@
       bubble.classList.remove("show");
       chat.classList.add("open"); figure.classList.add("chatting");
       if (!msgsEl.childElementCount) {
-        addMsg("assistant", `Hi${user?.name ? " " + user.name.split(" ")[0] : ""}! I'm Allie. Tell me what you're trying to make (a flyer, a video, an email, anything) and I'll point you to the right studio.`);
-        setChips(["Make a flyer for my event", "Write a follow-up email", "Create a short promo video", "Build a brand kit"]);
+        const first = user?.name ? " " + user.name.split(" ")[0] : "";
+        addMsg("assistant", String(G.greeting || `Hi{first}! I'm ${name}. Tell me what you're trying to make and I'll point you to the right studio.`).replace("{first}", first));
+        setChips(G.chips || []);
       }
       if (typeof prefill === "string" && prefill) ask(prefill); else setTimeout(() => input.focus(), 250);
     }
@@ -717,8 +735,8 @@
     bubble.onclick = () => openChat();
     $(".ac-close", root).onclick = closeChat;
     form.onsubmit = (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { ask(v); input.value = ""; } };
-    window.BCAI.askAllie = openChat;
+    window.BCAI.askGuide = openChat;
   }
 
-  window.BCAI = { api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, allie, tool, plain, saveWord, useIn, announce };
+  window.BCAI = { brand: B, asset, api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, guide, tool, plain, saveWord, useIn, announce };
 })();

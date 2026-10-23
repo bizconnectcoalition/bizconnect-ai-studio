@@ -1,6 +1,7 @@
-/* BizConnect AI Studio — the ten studios.
-   Each entry drives the home-page card, the quick-create panel and the full studio page. */
-window.STUDIOS = [
+/* AI Studio — the ten studios (shared by every brand).
+   Each entry drives the home-page card, the quick-create panel and the full studio page.
+   Keep the wording here brand-neutral; a brand changes any field via BRAND.studios in its brand.js. */
+const CORE_STUDIOS = [
   {
     id: "chat", name: "Chat", verb: "Ask anything",
     tagline: "Your all-purpose AI assistant",
@@ -15,7 +16,7 @@ window.STUDIOS = [
     tagline: "Flyers, product shots, social graphics",
     blurb: "Describe the picture you want and AI creates it in seconds. Great for social posts, event flyers, product mock-ups and website images.",
     placeholder: "A bright flyer-style photo of a charity car wash on a sunny Saturday…",
-    examples: ["Professional headshot-style photo of a smiling realtor in front of a modern home", "Flat-lay product photo of handmade candles on marble, soft light", "Poster for a business networking mixer, navy and gold, elegant", "Cozy coffee shop interior at golden hour, photorealistic"],
+    examples: ["Professional headshot-style photo of a smiling realtor in front of a modern home", "Flat-lay product photo of handmade candles on marble, soft light", "Poster for a summer open house, bright and elegant", "Cozy coffee shop interior at golden hour, photorealistic"],
     styles: ["Photorealistic", "Clean flat illustration", "3D render", "Watercolor", "Bold poster", "Minimal line art"],
     icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>'
   },
@@ -38,9 +39,9 @@ window.STUDIOS = [
   {
     id: "avatar", name: "Talking Avatar", verb: "Make a talking video",
     tagline: "A presenter reads your script on camera",
-    blurb: "Type a script and a presenter speaks it on video: Allie, or a photo of you. No camera, lighting or retakes needed.",
+    blurb: "Type a script and a presenter speaks it on video, using a photo of you. No camera, lighting or retakes needed.",
     placeholder: "Hi, I'm with Summit Realty. Here are three things to do before you list your home…",
-    examples: ["Hi! I'm Allie from BizConnect. Our next networking breakfast is Thursday at 8. Come meet local business owners!", "Welcome to our shop! Every order this week ships free.", "Three quick tips to get more referrals this month. Tip one: follow up within 24 hours."],
+    examples: ["Welcome to our shop! Every order this week ships free.", "Three quick tips to get more referrals this month. Tip one: follow up within 24 hours."],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M17.5 4.5c1 .8 1.5 2 1.5 3.5s-.5 2.7-1.5 3.5"/>'
   },
   {
@@ -58,7 +59,7 @@ window.STUDIOS = [
     tagline: "Presentations in minutes, PowerPoint ready",
     blurb: "Give it a topic and it writes a complete slide deck with titles, bullet points and speaker notes. Download it as a PowerPoint.",
     placeholder: "A 10-minute pitch for my commercial cleaning company to office managers…",
-    examples: ["Why local businesses should join a networking chapter", "Quarterly update for my real-estate team", "Pitch deck for a mobile dog-grooming startup", "Workshop: 5 ways to get more Google reviews"],
+    examples: ["How our business helps first-time customers", "Quarterly update for my real-estate team", "Pitch deck for a mobile dog-grooming startup", "Workshop: 5 ways to get more Google reviews"],
     icon: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8M7 8h6M7 11h10"/>'
   },
   {
@@ -75,7 +76,7 @@ window.STUDIOS = [
     tagline: "A tailored outreach pack from any website",
     blurb: "Paste a prospect's website. AI reads it and writes a personalized cold email, LinkedIn message, text, call opener and follow-up, all tailored to them.",
     placeholder: "https://example-business.com",
-    examples: ["bizconnectcoalition.com"],
+    examples: ["example-business.com"],
     icon: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>'
   },
   {
@@ -87,4 +88,9 @@ window.STUDIOS = [
     icon: '<path d="M12 3 4 7v5c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V7Z"/><path d="m9 12 2 2 4-4"/>'
   }
 ];
+// Apply the brand's overrides: BRAND.studios = { hide: ["music"], avatar: { examples: [...] }, ... }
+const STUDIO_OVERRIDES = (window.BRAND && window.BRAND.studios) || {};
+window.STUDIOS = CORE_STUDIOS
+  .filter((s) => !(STUDIO_OVERRIDES.hide || []).includes(s.id))
+  .map((s) => ({ ...s, ...(STUDIO_OVERRIDES[s.id] || {}) }));
 window.STUDIO_BY_ID = Object.fromEntries(window.STUDIOS.map((s) => [s.id, s]));

@@ -51,7 +51,13 @@
         if (studioId === "avatar" && full) parts.push(`<div class="field"><span class="label">Voice quality</span>${seg("voiceEngine", cat.voiceEngines.map((v) => v.id), st.voiceEngine, cat.voiceEngines.map((v) => v.label))}</div>`);
         parts.push(`<div class="field"><label>Voice</label><select class="input" data-f="voice">${vEng.voices.map((v) => `<option value="${esc(v[0])}" ${v[0] === st.voice ? "selected" : ""}>${esc(v[1])}</option>`).join("")}</select></div>`);
         if (studioId === "voice" && full) parts.push(`<div class="field"><span class="label">Pace</span>${seg("speed", ["0.9", "1", "1.1"], String(st.speed), ["Relaxed", "Normal", "Brisk"])}</div>`);
-        if (studioId === "avatar") parts.push(`<div class="field"><span class="label">Presenter</span><label class="drop"><img src="${esc(st.imageUrl || "assets/img/allie-avatar-sm.jpg")}" alt="">${st.imageUrl ? "Your photo · click to change" : "Allie (default) · click to use your own photo"}<input type="file" accept="image/*" data-upload="imageUrl"></label>${st.imageUrl ? `<button type="button" class="linkish" data-clear="imageUrl">Use Allie instead</button>` : ""}<small class="muted" style="font-size:11.5px">Use a clear, front-facing head-and-shoulders photo.</small></div>`);
+        if (studioId === "avatar") {
+          // BRAND.presenter = the default face; null means members must add their own photo
+          const P = BCAI.brand.presenter;
+          const thumb = st.imageUrl || (P ? BCAI.asset(P.thumb) : "");
+          const msg = st.imageUrl ? "Your photo · click to change" : P ? `${P.name} (default) · click to use your own photo` : "Add a photo of the presenter (required)";
+          parts.push(`<div class="field"><span class="label">Presenter</span><label class="drop">${thumb ? `<img src="${esc(thumb)}" alt="">` : ""}${esc(msg)}<input type="file" accept="image/*" data-upload="imageUrl"></label>${st.imageUrl && P ? `<button type="button" class="linkish" data-clear="imageUrl">Use ${esc(P.name)} instead</button>` : ""}<small class="muted" style="font-size:11.5px">Use a clear, front-facing head-and-shoulders photo.</small></div>`);
+        }
       }
       if (studioId === "music") {
         if (full) {
@@ -118,8 +124,14 @@
       return o;
     }
 
+    // Anything that must be filled before "Create" (returns a message, or "" when ready).
+    function missing() {
+      if (studioId === "avatar" && !st.imageUrl && !BCAI.brand.presenter) return "Add a photo of the presenter first (a clear, front-facing head-and-shoulders photo).";
+      return "";
+    }
+
     render();
-    return { state: st, options, engine: () => st.engine, price: (prompt) => BCAI.credits(studioId, st.engine, options(), prompt), rerender: render };
+    return { state: st, options, missing, engine: () => st.engine, price: (prompt) => BCAI.credits(studioId, st.engine, options(), prompt), rerender: render };
   }
 
   window.BCAI_CONTROLS = { build, DEFAULT_ENGINE };

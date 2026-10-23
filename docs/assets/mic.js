@@ -1,4 +1,4 @@
-/* BizConnect AI Studio — voice input for every text box.
+/* AI Studio — voice input for every text box.
    Tap the mic and talk. It stops by itself when you pause (or tap ■). Words appear live where the
    browser supports it, then a Whisper transcript polishes them. Nothing is ever lost: Undo is offered. */
 (function () {

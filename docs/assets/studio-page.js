@@ -7,9 +7,9 @@
   const S = STUDIO_BY_ID[id];
   BCAI.header("studio");
   BCAI.footer();
-  BCAI.allie();
+  BCAI.guide();
 
-  document.title = `${S.name} Studio — BizConnect AI Studio`;
+  document.title = `${S.name} Studio — ${BCAI.brand.productName}`;
   $("#crumb").textContent = S.name;
   $("#s-name").textContent = `${S.name} Studio`;
   $("#s-tag").textContent = S.blurb;
@@ -71,6 +71,8 @@
     e.preventDefault();
     const prompt = input.value.trim();
     if (!prompt) return;
+    const need = ctl?.missing?.();
+    if (need) { $("#stage").innerHTML = `<div class="err">${esc(need)}</div>`; return; }
     const go = $("#go");
     go.disabled = true; go.textContent = "Creating…";
     const stage = $("#stage");

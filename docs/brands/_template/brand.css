@@ -1,0 +1,29 @@
+/* <Business> AI Studio — theme (TEMPLATE). Every token is required.
+   The studio design is DARK: --bg-* are the page and panel backgrounds, --text must read well on them.
+   Write each color twice where asked: as hex, and as an "r,g,b" triplet (used for see-through tints). */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;1,500&family=Jost:wght@400;500;600;700&display=swap");
+:root{
+  --bg-950:#101214; --bg-900:#16191C; --bg-800:#1D2125; --bg-700:#262B30; --bg-600:#39414A; /* page, panels, raised panels */
+  --ink:#0B0D0F;                        /* darkest: input boxes, text areas */
+  --accent:#C6972F;                     /* buttons, active borders, highlights */
+  --accent-hi:#E7C878;                  /* lighter accent: headings in accent, links, numbers */
+  --accent-glow:#F0DCA0;                /* lightest accent: hover on chips */
+  --accent-deep:#9C7521;                /* darker accent: end of button gradient */
+  --text:#F7F6F2; --text-dim:#DDE0E6;   /* main text, secondary text */
+  --slate:#9BA6BC; --slate-dim:#6E7A93; /* muted labels, placeholders */
+  --green:#5FB98A; --red:#E0776B;       /* success / error */
+  /* the same colors as r,g,b (must match the hex values above) */
+  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:155,166,188;
+  --bg-950-rgb:16,18,20; --bg-700-rgb:38,43,48; --bg-600-rgb:57,65,74;
+  --bg-raise-rgb:30,34,38;              /* the open quick-create panel, between bg-800 and bg-700 */
+  --ink-rgb:11,13,15; --overlay-rgb:5,6,8;
+  --line:rgba(198,151,47,.22);          /* accent hairlines (accent-rgb at ~.22) */
+  --line-soft:rgba(155,166,188,.14);    /* neutral hairlines (slate-rgb at ~.14) */
+  --card:linear-gradient(165deg,rgba(38,43,48,.72),rgba(16,18,20,.92)); /* card background (bg-700 → bg-950) */
+  /* fonts: headings / italic accents / body / small uppercase labels */
+  --serif:'Cormorant',Georgia,serif; --serif-2:'Cormorant',Georgia,serif;
+  --sans:'Jost',system-ui,sans-serif; --mono:'Jost',system-ui,sans-serif;
+  --r:14px; --maxw:1240px;              /* corner radius, page width */
+  --shadow-lg:0 30px 70px -30px rgba(0,0,0,.65); --shadow-md:0 18px 40px -22px rgba(0,0,0,.55);
+}
+/* Small brand-only tweaks may go below (e.g. heading weight for a thin font). Keep them few. */

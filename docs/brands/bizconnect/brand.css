@@ -1,0 +1,25 @@
+/* BizConnect AI Studio — "Midnight Charter" theme.
+   Shares tokens with the Biz Connect Coalition site: navy canvas · gold seal-work · Marcellus serif · IBM Plex.
+   Every token below is required (see docs/brands/_template/brand.css for what each one paints). */
+@import url("https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap");
+:root{
+  /* page and panel backgrounds, darkest to lightest */
+  --bg-950:#0A1428; --bg-900:#0E1B33; --bg-800:#132449; --bg-700:#16264A; --bg-600:#22406C;
+  --ink:#070E1D;
+  /* accent (buttons, highlights, borders) */
+  --accent:#C6972F; --accent-hi:#E7C878; --accent-glow:#F0DCA0; --accent-deep:#9C7521;
+  /* text */
+  --text:#F7F6F2; --text-dim:#DDE0E6; --slate:#9BA6BC; --slate-dim:#6E7A93;
+  --green:#5FB98A; --red:#E0776B;
+  /* the same colours as r,g,b triplets, for translucent tints: rgba(var(--accent-rgb),.2) */
+  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:155,166,188;
+  --bg-950-rgb:10,20,40; --bg-700-rgb:22,38,74; --bg-600-rgb:34,64,108; --bg-raise-rgb:26,46,88;
+  --ink-rgb:7,14,29; --overlay-rgb:5,10,22;
+  --line:rgba(198,151,47,.22); --line-soft:rgba(155,166,188,.14);
+  --card:linear-gradient(165deg,rgba(22,38,74,.72),rgba(10,20,40,.92));
+  /* fonts: --serif = headings, --serif-2 = italic accents, --sans = body, --mono = small labels */
+  --serif:'Marcellus',serif; --serif-2:'Cormorant Garamond',serif;
+  --sans:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
+  --r:14px; --maxw:1240px;
+  --shadow-lg:0 30px 70px -30px rgba(0,0,0,.65); --shadow-md:0 18px 40px -22px rgba(0,0,0,.55);
+}

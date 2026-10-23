@@ -4,7 +4,7 @@
   const { esc, $, svg } = BCAI;
   BCAI.header("home");
   BCAI.footer();
-  BCAI.allie();
+  BCAI.guide();
 
   const grid = $("#cards");
   let openId = null;
@@ -57,7 +57,7 @@
         </div>
         <div class="q-controls"></div>
         <div class="chips">${S.examples.map((e) => `<button type="button" class="chip" data-ex="${esc(e)}">${esc(e.length > 70 ? e.slice(0, 68) + "…" : e)}</button>`).join("")}</div>
-        <div class="quick-foot"><span class="muted">Estimated cost: <b style="color:var(--gold-hi)" class="q-cost">…</b> <span class="q-dollars"></span></span><span class="muted">Engine: <b class="q-engine" style="color:var(--ivory)"></b> · <a class="linkish" href="studio.html?s=${id}">more options</a></span></div>
+        <div class="quick-foot"><span class="muted">Estimated cost: <b style="color:var(--accent-hi)" class="q-cost">…</b> <span class="q-dollars"></span></span><span class="muted">Engine: <b class="q-engine" style="color:var(--text)"></b> · <a class="linkish" href="studio.html?s=${id}">more options</a></span></div>
         <div class="q-out" style="margin-top:16px"></div>
       </form>`;
     const form = $("form", panel), input = form.elements.p, out = $(".q-out", panel);
@@ -75,6 +75,8 @@
     panel.querySelectorAll("[data-ex]").forEach((c) => (c.onclick = () => { input.value = c.dataset.ex; update(); input.focus(); }));
     form.onsubmit = async (e) => {
       e.preventDefault();
+      const need = ctl?.missing?.();
+      if (need) { out.innerHTML = `<div class="err">${esc(need)}</div>`; return; }
       const btn = $("button[type=submit]", form);
       btn.disabled = true; btn.textContent = "Creating…";
       out.innerHTML = BCAI.progressHTML(`${S.verb}…`);
@@ -105,6 +107,7 @@
   }
 
   drawCards();
+  $("#studio-count").textContent = STUDIOS.length;
   BCAI.whenSignedIn(async () => {
     await BCAI.loadCatalog();
     document.querySelectorAll("[data-price]").forEach((el) => (el.textContent = BCAI.fromPrice(el.dataset.price)));
