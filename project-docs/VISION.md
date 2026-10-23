@@ -19,6 +19,8 @@ Small-business owners hear that AI can write their emails, make their flyers, cu
 | Sales Outreach | Reads a prospect's website, writes a tailored outreach pack |
 | Brand Kit | Name ideas, tagline, colors, fonts, bios, logo concept |
 
+New visitors see a **Simple mode** with just Chat, Images and Video, so the first look isn't overwhelming. One button ("Show all 10 tools") switches to **Advanced mode** with everything. Each business can choose its own three starter tools.
+
 A friendly **guide** (BizConnect's Allie) greets newcomers and points them to the right studio.
 
 ## The money model (prototype settings)

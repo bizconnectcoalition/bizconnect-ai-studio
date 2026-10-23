@@ -2,6 +2,9 @@
 
 Newest first. Status: DECIDED / OPEN.
 
+## D-008 · 2026-10-23 · Simple mode by default (DECIDED)
+Dan: "a simple mode and then an advanced mode. The simple mode just has chat, images, video… then you can click a button for showing the rest." Built into the core so every brand gets it. Starter tools are per brand (`simpleStudios`), and the choice is remembered per browser. This BizConnect setup is now the template the other business studios follow.
+
 ## D-007 · 2026-10-23 · Seven-reviewer critique of the white-label build (DONE)
 Independent reviews: cold-start comprehension, follow-the-guide (built a third test brand from the docs alone, with zero errors), front-end code, Worker safety and compatibility, Root & Bloom brand fit, privacy/public-repo, architecture. **Applied:**
 - safer sync: staleness check (`-Check`), hand-edit guard, loud failures

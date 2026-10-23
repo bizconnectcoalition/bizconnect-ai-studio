@@ -9,16 +9,36 @@
   const grid = $("#cards");
   let openId = null;
 
+  // Simple mode = the brand's starter tools (bigger cards) + a button for the rest; Advanced = every studio.
   function drawCards() {
-    grid.innerHTML = STUDIOS.map((s) => `
+    const list = BCAI.visibleStudios();
+    const simple = BCAI.mode() === "simple";
+    grid.classList.toggle("simple", simple);
+    grid.innerHTML = list.map((s) => `
       <button class="card" data-id="${s.id}" aria-expanded="false">
         <span class="ico">${svg(s.icon)}</span>
         <h3>${esc(s.name)}</h3>
         <p>${esc(s.tagline)}</p>
+        ${simple ? `<p class="card-blurb">${esc(s.blurb)}</p>` : ""}
         <span class="price" data-price="${s.id}"></span>
       </button>`).join("");
     grid.querySelectorAll(".card").forEach((c) => (c.onclick = () => toggle(c.dataset.id)));
+    openId = null;
+    const more = $("#more-tools");
+    const hidden = STUDIOS.length - list.length;
+    more.innerHTML = !BCAI.hasSimple() ? "" : simple
+      ? `<button type="button" class="btn btn-ghost more-btn" data-go="advanced">Show all ${STUDIOS.length} tools <span class="muted">(+${hidden} more: ${esc(STUDIOS.filter((s) => !list.includes(s)).map((s) => s.name).join(", "))})</span></button>`
+      : `<button type="button" class="linkish" data-go="simple">← Back to simple mode (${esc(list.length ? BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ") : "")})</button>`;
+    const go = more.querySelector("[data-go]");
+    if (go) go.onclick = () => BCAI.setMode(go.dataset.go);
+    BCAI.modeToggle($("#mode-toggle"));
+    fillPrices();
   }
+  function fillPrices() {
+    if (!BCAI.catalog) return;
+    document.querySelectorAll("[data-price]").forEach((el) => (el.textContent = BCAI.fromPrice(el.dataset.price)));
+  }
+  document.addEventListener("bcai:mode", () => drawCards());
 
   function columns() { return getComputedStyle(grid).gridTemplateColumns.split(" ").length; }
 
@@ -110,9 +130,12 @@
   $("#studio-count").textContent = STUDIOS.length;
   BCAI.whenSignedIn(async () => {
     await BCAI.loadCatalog();
-    document.querySelectorAll("[data-price]").forEach((el) => (el.textContent = BCAI.fromPrice(el.dataset.price)));
+    fillPrices();
     loadRecent();
     const want = (location.hash.match(/open=(\w+)/) || [])[1];
-    if (want && STUDIO_BY_ID[want]) toggle(want);
+    if (want && STUDIO_BY_ID[want]) {
+      if (!grid.querySelector(`[data-id="${want}"]`)) BCAI.setMode("advanced"); // a link to a hidden tool opens all tools
+      toggle(want);
+    }
   });
 })();

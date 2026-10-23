@@ -21,6 +21,13 @@ See `tools/brand-template/brand.js` (every field explained) and `tools/brand-tem
 ### CSS tokens
 `--bg-950…--bg-600` (canvas and panels), `--ink`, `--accent`, `--accent-hi/-glow/-deep`, `--text`, `--text-dim`, `--slate`, `--slate-dim`, `--green`, `--red`, `--line`, `--line-soft`, `--card`, fonts `--serif`, `--serif-2`, `--sans`, `--mono`, and RGB triplets for tints (`--accent-rgb`, `--accent-hi-rgb`, `--text-rgb`, `--slate-rgb`, `--bg-950-rgb`, `--bg-700-rgb`, `--bg-600-rgb`, `--bg-raise-rgb`, `--ink-rgb`, `--overlay-rgb`). The design is built for **dark** canvases; a light theme needs core work (see VISION.md).
 
+## Simple / Advanced mode
+Every studio opens in **Simple mode**: the home page shows only the brand's starter tools (`BRAND.simpleStudios`, default Chat · Images · Video) as larger cards, plus a **"Show all N tools"** button. **Advanced mode** shows every studio. A *Simple | All N tools* switch sits beside "What would you like to create?", and the studio page's tool tabs follow the same mode (with a "+ N more tools" / "Simple mode" tab).
+- The choice is remembered per browser (`localStorage` key `bcai_mode`) and applies on every page. `BRAND.defaultMode: "advanced"` makes new visitors start with everything showing.
+- Hidden tools still work: links from the guide, "Use this in…" or a URL open them, and the open studio always shows its own tab.
+- The code is `mode()`, `setMode()`, `visibleStudios()` and `modeToggle()` in `app.js`; it fires a `bcai:mode` event that `home.js` and `studio-page.js` redraw on.
+- If a brand hides studios until only its starter tools remain, the switch disappears.
+
 ## The Worker and brands
 - Every POST body carries `brand: "<id>"` (added automatically by `api()` in `app.js`).
 - `BRANDS` in `worker/src/index.js` maps ids to `{product, about, audience, guide, presenter}`. Used for:

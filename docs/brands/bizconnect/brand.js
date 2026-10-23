@@ -58,6 +58,10 @@ window.BRAND = {
   // Default face for the Talking Avatar studio. presenter: null = members must upload their own photo.
   presenter: { name: "Allie", thumb: "img/guide-avatar.jpg" },
 
+  // Simple mode (the default) shows these starter tools; a button reveals the rest (Advanced).
+  simpleStudios: ["chat", "image", "video"],
+  defaultMode: "simple",
+
   // Per-studio wording overrides (any field from assets/studios.js). hide: [...] removes studios.
   studios: {
     image: { examples: ["Professional headshot-style photo of a smiling realtor in front of a modern home", "Flat-lay product photo of handmade candles on marble, soft light", "Poster for a business networking mixer, navy and gold, elegant", "Cozy coffee shop interior at golden hour, photorealistic"] },

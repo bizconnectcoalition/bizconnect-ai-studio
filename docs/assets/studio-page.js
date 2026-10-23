@@ -15,7 +15,18 @@
   $("#s-tag").textContent = S.blurb;
   $("#s-ico").innerHTML = svg(S.icon);
   $("#empty-ico").innerHTML = svg(S.icon);
-  $("#switcher").innerHTML = STUDIOS.map((s) => `<button type="button" class="${s.id === id ? "on" : ""}" onclick="location.href='studio.html?s=${s.id}'">${esc(s.name)}</button>`).join("");
+  // Tool tabs follow Simple/Advanced mode; the open studio always shows, even if Simple mode hides it.
+  function drawSwitcher() {
+    const shown = BCAI.visibleStudios().slice();
+    if (!shown.includes(S)) shown.push(S);
+    const simple = BCAI.mode() === "simple";
+    $("#switcher").innerHTML = shown.map((s) => `<button type="button" class="${s.id === id ? "on" : ""}" onclick="location.href='studio.html?s=${s.id}'">${esc(s.name)}</button>`).join("") +
+      (BCAI.hasSimple() ? `<button type="button" class="seg-more" data-go="${simple ? "advanced" : "simple"}">${simple ? `+ ${STUDIOS.length - shown.length} more tools` : "Simple mode"}</button>` : "");
+    const go = $("#switcher [data-go]");
+    if (go) go.onclick = () => BCAI.setMode(go.dataset.go);
+  }
+  drawSwitcher();
+  document.addEventListener("bcai:mode", drawSwitcher);
 
   const isChat = id === "chat";
   const long = ["chat", "translate", "voice", "avatar", "music", "deck", "brand", "image", "video"].includes(id);

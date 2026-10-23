@@ -55,6 +55,11 @@ window.BRAND = {
   // or null = members must upload their own photo.
   presenter: null,
 
+  // Simple mode (the default view) shows only these starter tools, with a button for the rest.
+  // Default: chat, image, video. defaultMode: "advanced" opens with every tool showing instead.
+  simpleStudios: ["chat", "image", "video"],
+  defaultMode: "simple",
+
   // Per-studio wording. Any field from docs/assets/studios.js: tagline, blurb, placeholder, examples,
   // personas (chat), styles (image), genres/moods (music), languages (translate).
   // hide: ["music", "outreach"] removes studios completely.

@@ -73,6 +73,32 @@
     if (reload) location.reload();
   }
 
+  // ---------------- Simple / Advanced mode ----------------
+  // Simple mode shows only the brand's starter tools (BRAND.simpleStudios, default Chat · Images · Video);
+  // Advanced shows every studio. The choice is remembered in this browser. Hidden studios still open by link.
+  const MODE_KEY = "bcai_mode";
+  const simpleIds = () => {
+    const want = Array.isArray(B.simpleStudios) && B.simpleStudios.length ? B.simpleStudios : ["chat", "image", "video"];
+    const ok = want.filter((id) => window.STUDIO_BY_ID?.[id]);
+    return ok.length ? ok : (window.STUDIOS || []).slice(0, 3).map((s) => s.id);
+  };
+  const hasSimple = () => (window.STUDIOS || []).length > simpleIds().length; // nothing to hide = no toggle
+  function mode() {
+    if (!hasSimple()) return "advanced";
+    const m = store.get(MODE_KEY);
+    return m === "simple" || m === "advanced" ? m : B.defaultMode === "advanced" ? "advanced" : "simple";
+  }
+  function setMode(m) { store.set(MODE_KEY, m); document.dispatchEvent(new CustomEvent("bcai:mode", { detail: m })); }
+  function visibleStudios() { return mode() === "simple" ? simpleIds().map((id) => STUDIO_BY_ID[id]) : window.STUDIOS; }
+  // The Simple | All tools switch (a small two-button group). host gets re-rendered on every change.
+  function modeToggle(host) {
+    if (!host) return;
+    if (!hasSimple()) { host.innerHTML = ""; return; }
+    const m = mode(), total = window.STUDIOS.length;
+    host.innerHTML = `<button type="button" data-m="simple" class="${m === "simple" ? "on" : ""}" aria-pressed="${m === "simple"}">Simple</button><button type="button" data-m="advanced" class="${m === "advanced" ? "on" : ""}" aria-pressed="${m === "advanced"}">All ${total} tools</button>`;
+    host.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { if (mode() !== b.dataset.m) setMode(b.dataset.m); }));
+  }
+
   // ---------------- pricing (mirrors the Worker's estimate) ----------------
   function engineFor(studio, id) {
     const list = catalog?.studios?.[studio] || [];
@@ -746,5 +772,5 @@
     window.BCAI.askGuide = openChat;
   }
 
-  window.BCAI = { brand: B, asset, api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, guide, tool, plain, saveWord, useIn, announce };
+  window.BCAI = { brand: B, asset, mode, setMode, visibleStudios, simpleIds, hasSimple, modeToggle, api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, guide, tool, plain, saveWord, useIn, announce };
 })();
