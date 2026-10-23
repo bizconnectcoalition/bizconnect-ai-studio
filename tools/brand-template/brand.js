@@ -56,6 +56,7 @@ window.BRAND = {
   presenter: null,
 
   // Simple mode (the default view) shows only these starter tools, with a button for the rest.
+  // Pick 3, in order of what this business's customers do most; never list a studio that is also in studios.hide.
   // Default: chat, image, video. defaultMode: "advanced" opens with every tool showing instead.
   simpleStudios: ["chat", "image", "video"],
   defaultMode: "simple",

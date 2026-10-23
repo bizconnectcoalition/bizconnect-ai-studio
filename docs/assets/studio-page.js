@@ -21,9 +21,9 @@
     if (!shown.includes(S)) shown.push(S);
     const simple = BCAI.mode() === "simple";
     $("#switcher").innerHTML = shown.map((s) => `<button type="button" class="${s.id === id ? "on" : ""}" onclick="location.href='studio.html?s=${s.id}'">${esc(s.name)}</button>`).join("") +
-      (BCAI.hasSimple() ? `<button type="button" class="seg-more" data-go="${simple ? "advanced" : "simple"}">${simple ? `+ ${STUDIOS.length - shown.length} more tools` : "Simple mode"}</button>` : "");
+      (BCAI.hasSimple() ? `<button type="button" class="seg-more" data-go="${simple ? "advanced" : "simple"}">${simple ? `All ${STUDIOS.length} tools →` : "← Simple"}</button>` : "");
     const go = $("#switcher [data-go]");
-    if (go) go.onclick = () => BCAI.setMode(go.dataset.go);
+    if (go) go.onclick = () => { BCAI.setMode(go.dataset.go); $("#switcher [data-go]")?.focus(); }; // keep keyboard focus on the switch
   }
   drawSwitcher();
   document.addEventListener("bcai:mode", drawSwitcher);

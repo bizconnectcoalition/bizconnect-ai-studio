@@ -24,7 +24,8 @@ See `tools/brand-template/brand.js` (every field explained) and `tools/brand-tem
 ## Simple / Advanced mode
 Every studio opens in **Simple mode**: the home page shows only the brand's starter tools (`BRAND.simpleStudios`, default Chat · Images · Video) as larger cards, plus a **"Show all N tools"** button. **Advanced mode** shows every studio. A *Simple | All N tools* switch sits beside "What would you like to create?", and the studio page's tool tabs follow the same mode (with a "+ N more tools" / "Simple mode" tab).
 - The choice is remembered per browser (`localStorage` key `bcai_mode`) and applies on every page. `BRAND.defaultMode: "advanced"` makes new visitors start with everything showing.
-- Hidden tools still work: links from the guide, "Use this in…" or a URL open them, and the open studio always shows its own tab.
+- Hidden tools still work: links from the guide, "Use this in…" or a URL open them, and the open studio always shows its own tab. A home-page link straight to a hidden tool (`index.html#open=deck`) shows all tools for that visit only; it doesn't change the remembered choice.
+- Visitors who never touched the switch see the brand's default (Simple), including people who used the studio before the switch existed. If storage is blocked (private browsing), the switch still works for the current page.
 - The code is `mode()`, `setMode()`, `visibleStudios()` and `modeToggle()` in `app.js`; it fires a `bcai:mode` event that `home.js` and `studio-page.js` redraw on.
 - If a brand hides studios until only its starter tools remain, the switch disappears.
 

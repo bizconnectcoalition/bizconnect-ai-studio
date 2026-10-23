@@ -97,7 +97,7 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .mode-toggle button{border:none;background:none;color:var(--text-dim);font:600 13px var(--sans);padding:7px 16px;border-radius:100px;cursor:pointer;transition:background .2s,color .2s}
 .mode-toggle button.on{background:linear-gradient(135deg,var(--accent-hi),var(--accent));color:var(--bg-950)}
 .mode-toggle button:not(.on):hover{color:var(--accent-hi)}
-.cards.simple{grid-template-columns:repeat(3,1fr);gap:18px}
+.cards.simple{grid-template-columns:repeat(var(--simple-cols,3),1fr);gap:18px}
 .cards.simple .card{min-height:230px;padding:26px 24px 22px}
 .cards.simple .card h3{font-size:24px}
 .cards.simple .card .ico{width:52px;height:52px}
@@ -105,8 +105,8 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .card-blurb{color:var(--text-dim)!important;font-size:13.5px!important}
 .more-tools{display:flex;justify-content:center;margin-top:18px}
 .more-tools:empty{display:none}
-.more-btn{white-space:normal;text-align:center;flex-wrap:wrap;max-width:100%}
-.more-btn .muted{font-weight:400;font-size:12.5px}
+.more-btn{white-space:normal;text-align:center;flex-direction:column;gap:3px;max-width:100%;padding:13px 26px;border-color:var(--accent)}
+.more-btn small{font-weight:400;font-size:12px}
 .seg .seg-more{border-style:dashed;color:var(--accent-hi)}
 
 /* ---------- form fields ---------- */
@@ -362,7 +362,7 @@ footer.bot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:w
   .hero{padding-top:40px}
 }
 @media (max-width:420px){.cards{grid-template-columns:1fr}.card{min-height:0}}
-@media (max-width:720px){.cards.simple{grid-template-columns:1fr}.cards.simple .card{min-height:0}.head-side{align-items:flex-start}}
+@media (max-width:720px){.cards.simple{grid-template-columns:1fr}.cards.simple .card{min-height:0}.head-side{align-items:flex-start}.more-btn{width:100%}}
 
 /* ---------- copy / download / share tools on every result ---------- */
 .out-meta .actions{display:flex;gap:8px;flex-wrap:wrap}

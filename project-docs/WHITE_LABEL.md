@@ -31,6 +31,7 @@ Then edit (every field is explained in the file):
   - Write industry-specific example prompts in `studios`; they matter most for first impressions.
   - Avoid health, safety or "organic" product claims unless the business approves the wording.
   - Keep `noindex: true` until the business approves the site.
+  - Pick the 3 **starter tools** for Simple mode in `simpleStudios`: what this business's customers will do most, in that order. They must not also be in `studios.hide`.
 - `docs\brands\<id>\brand.css`: the color and font tokens.
   - The studio is a **dark** design: the brand's darkest color becomes the canvas (`--bg-*`), and its warmest or brightest color becomes `--accent`.
   - Keep text readable (`--text` on `--bg-900`).

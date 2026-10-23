@@ -77,26 +77,38 @@
   // Simple mode shows only the brand's starter tools (BRAND.simpleStudios, default Chat · Images · Video);
   // Advanced shows every studio. The choice is remembered in this browser. Hidden studios still open by link.
   const MODE_KEY = "bcai_mode";
+  let modeNow = null; // in-memory copy, so the switch still works when the browser blocks storage
+  let simpleCache = null;
   const simpleIds = () => {
-    const want = Array.isArray(B.simpleStudios) && B.simpleStudios.length ? B.simpleStudios : ["chat", "image", "video"];
+    if (simpleCache) return simpleCache;
+    const want = [...new Set(Array.isArray(B.simpleStudios) && B.simpleStudios.length ? B.simpleStudios : ["chat", "image", "video"])];
     const ok = want.filter((id) => window.STUDIO_BY_ID?.[id]);
-    return ok.length ? ok : (window.STUDIOS || []).slice(0, 3).map((s) => s.id);
+    if (ok.length < want.length) console.warn("BRAND.simpleStudios lists studios that don't exist or are hidden:", want.filter((id) => !ok.includes(id)));
+    return (simpleCache = ok.length ? ok : (window.STUDIOS || []).slice(0, 3).map((s) => s.id));
   };
-  const hasSimple = () => (window.STUDIOS || []).length > simpleIds().length; // nothing to hide = no toggle
+  const hasSimple = () => (window.STUDIOS || []).length > simpleIds().length; // nothing to hide = no switch
   function mode() {
     if (!hasSimple()) return "advanced";
-    const m = store.get(MODE_KEY);
+    const m = modeNow || store.get(MODE_KEY);
     return m === "simple" || m === "advanced" ? m : B.defaultMode === "advanced" ? "advanced" : "simple";
   }
-  function setMode(m) { store.set(MODE_KEY, m); document.dispatchEvent(new CustomEvent("bcai:mode", { detail: m })); }
+  // remember = false: change the view for this page only (e.g. a link straight to a hidden tool)
+  function setMode(m, remember = true) {
+    modeNow = m;
+    if (remember) store.set(MODE_KEY, m);
+    document.dispatchEvent(new CustomEvent("bcai:mode", { detail: m }));
+  }
   function visibleStudios() { return mode() === "simple" ? simpleIds().map((id) => STUDIO_BY_ID[id]) : window.STUDIOS; }
-  // The Simple | All tools switch (a small two-button group). host gets re-rendered on every change.
+  // The Simple | All tools switch (two-button group). Updated in place so keyboard focus stays put.
   function modeToggle(host) {
     if (!host) return;
     if (!hasSimple()) { host.innerHTML = ""; return; }
-    const m = mode(), total = window.STUDIOS.length;
-    host.innerHTML = `<button type="button" data-m="simple" class="${m === "simple" ? "on" : ""}" aria-pressed="${m === "simple"}">Simple</button><button type="button" data-m="advanced" class="${m === "advanced" ? "on" : ""}" aria-pressed="${m === "advanced"}">All ${total} tools</button>`;
-    host.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { if (mode() !== b.dataset.m) setMode(b.dataset.m); }));
+    if (!host.childElementCount) {
+      host.innerHTML = `<button type="button" data-m="simple">Simple</button><button type="button" data-m="advanced">All ${window.STUDIOS.length} tools</button>`;
+      host.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { if (mode() !== b.dataset.m) setMode(b.dataset.m); }));
+    }
+    const m = mode();
+    host.querySelectorAll("[data-m]").forEach((b) => { b.classList.toggle("on", b.dataset.m === m); b.setAttribute("aria-pressed", String(b.dataset.m === m)); });
   }
 
   // ---------------- pricing (mirrors the Worker's estimate) ----------------

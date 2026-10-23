@@ -2,6 +2,8 @@
 
 An all-in-one AI creation studio for small businesses: ten simple studios (chat, images, video, voiceover, talking avatar, music, slide decks, translation, sales outreach and brand kits) with a credit wallet and referral sharing. Members describe what they want in plain words; the studio picks the AI model and handles the rest.
 
+Every studio opens in **Simple mode** (Chat, Images, Video, or whichever 3 starter tools a business picks) with one button to see all tools.
+
 This repo is two things at once:
 
 1. **The BizConnect studio**, Biz Connect Coalition's own branded studio (navy and gold, Allie the guide). Live at https://bizconnectcoalition.github.io/bizconnect-ai-studio/

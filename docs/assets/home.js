@@ -14,6 +14,11 @@
     const list = BCAI.visibleStudios();
     const simple = BCAI.mode() === "simple";
     grid.classList.toggle("simple", simple);
+    grid.style.setProperty("--simple-cols", Math.min(list.length, 4));
+    const total = STUDIOS.length;
+    $("#studio-count").parentElement.innerHTML = simple
+      ? `<b id="studio-count">${list.length}</b> starter tools · ${total - list.length} more a click away`
+      : `<b id="studio-count">${total}</b> creative tools`;
     grid.innerHTML = list.map((s) => `
       <button class="card" data-id="${s.id}" aria-expanded="false">
         <span class="ico">${svg(s.icon)}</span>
@@ -25,12 +30,12 @@
     grid.querySelectorAll(".card").forEach((c) => (c.onclick = () => toggle(c.dataset.id)));
     openId = null;
     const more = $("#more-tools");
-    const hidden = STUDIOS.length - list.length;
+    const starters = BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ");
     more.innerHTML = !BCAI.hasSimple() ? "" : simple
-      ? `<button type="button" class="btn btn-ghost more-btn" data-go="advanced">Show all ${STUDIOS.length} tools <span class="muted">(+${hidden} more: ${esc(STUDIOS.filter((s) => !list.includes(s)).map((s) => s.name).join(", "))})</span></button>`
-      : `<button type="button" class="linkish" data-go="simple">← Back to simple mode (${esc(list.length ? BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ") : "")})</button>`;
+      ? `<button type="button" class="btn btn-ghost more-btn" data-go="advanced"><span>See all ${total} tools →</span><small class="muted">${esc(STUDIOS.filter((s) => !list.includes(s)).map((s) => s.name).join(" · "))}</small></button>`
+      : `<button type="button" class="linkish" data-go="simple">← Back to Simple (${esc(starters)})</button>`;
     const go = more.querySelector("[data-go]");
-    if (go) go.onclick = () => BCAI.setMode(go.dataset.go);
+    if (go) go.onclick = () => { BCAI.setMode(go.dataset.go); $("#mode-toggle [data-m]")?.scrollIntoView({ block: "nearest" }); };
     BCAI.modeToggle($("#mode-toggle"));
     fillPrices();
   }
@@ -49,6 +54,7 @@
     openId = id;
     const cards = [...grid.querySelectorAll(".card")];
     const idx = cards.findIndex((c) => c.dataset.id === id);
+    if (idx < 0) { openId = null; return; }
     const cols = columns();
     const rowEnd = Math.min(cards.length - 1, Math.floor(idx / cols) * cols + cols - 1);
     cards[idx].classList.add("open");
@@ -127,14 +133,13 @@
   }
 
   drawCards();
-  $("#studio-count").textContent = STUDIOS.length;
   BCAI.whenSignedIn(async () => {
     await BCAI.loadCatalog();
     fillPrices();
     loadRecent();
     const want = (location.hash.match(/open=(\w+)/) || [])[1];
     if (want && STUDIO_BY_ID[want]) {
-      if (!grid.querySelector(`[data-id="${want}"]`)) BCAI.setMode("advanced"); // a link to a hidden tool opens all tools
+      if (!grid.querySelector(`[data-id="${want}"]`)) BCAI.setMode("advanced", false); // a link to a hidden tool shows all tools for this visit only
       toggle(want);
     }
   });
