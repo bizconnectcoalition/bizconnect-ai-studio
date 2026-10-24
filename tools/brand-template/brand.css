@@ -1,4 +1,4 @@
-/* <Business> AI Studio — theme (TEMPLATE). Every token is required.
+/* <Business> AI Studio — theme (TEMPLATE). Every token is required, except the lines marked (optional): leave those out and the core falls back to the plain look.
    The studio design is DARK: --bg-* are the page and panel backgrounds, --text must read well on them.
    Write each color twice where asked: as hex, and as an "r,g,b" triplet (used for see-through tints). */
 @import url("https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;1,500&family=Jost:wght@400;500;600;700&display=swap");
@@ -10,16 +10,26 @@
   --accent-glow:#F0DCA0;                /* lightest accent: hover on chips */
   --accent-deep:#9C7521;                /* darker accent: end of button gradient */
   --text:#F7F6F2; --text-dim:#DDE0E6;   /* main text, secondary text */
-  --slate:#9BA6BC; --slate-dim:#6E7A93; /* muted labels, placeholders */
+  --slate:#A7B1C6; --slate-dim:#6E7A93; /* muted labels, placeholders: --slate ≥ 4.5:1 on the lightest card stop */
   --green:#5FB98A; --red:#E0776B;       /* success / error */
   /* the same colors as r,g,b (must match the hex values above) */
-  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:155,166,188;
+  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:167,177,198;
   --bg-950-rgb:16,18,20; --bg-700-rgb:38,43,48; --bg-600-rgb:57,65,74;
   --bg-raise-rgb:30,34,38;              /* the open quick-create panel, between bg-800 and bg-700 */
   --ink-rgb:11,13,15; --overlay-rgb:5,6,8;
   --line:rgba(198,151,47,.22);          /* accent hairlines (accent-rgb at ~.22) */
   --line-soft:rgba(155,166,188,.14);    /* neutral hairlines (slate-rgb at ~.14) */
-  --card:linear-gradient(165deg,rgba(38,43,48,.72),rgba(16,18,20,.92)); /* card background (bg-700 → bg-950) */
+  /* Raised surfaces (cards, panels, stats, credit packs). Make them clearly LIGHTER than the page so they stand out:
+     first (lightest) stop ≥ 1.4:1 contrast vs --bg-900, last stop ≥ 1.15:1 (check at webaim.org/resources/contrastchecker).
+     A good start: first stop about one step lighter than --bg-700, then darken slightly. */
+  --card:linear-gradient(165deg,#30373E 0%,#2A3036 55%,#262B31 100%);
+  --card-border:rgba(255,255,255,.14);                       /* (optional) card edge; default --line-soft */
+  --card-border-hover:rgba(var(--accent-hi-rgb),.55);        /* (optional) hover edge; default --line */
+  --card-muted:#B8BFC9;            /* (optional) secondary text on cards: ≥ 4.5:1 on the LIGHTEST card stop; default --slate */
+  --tier-fast-text:#8FE0B0;        /* (optional) "FAST" tag text on its green tint; default --green */
+  /* (optional) layered shadows; usually leave as is. Default: no shadow at rest, --shadow-md on hover */
+  --shadow-card:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.55),0 22px 44px -22px rgba(0,0,0,.65);
+  --shadow-card-hover:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.45),0 16px 30px -8px rgba(0,0,0,.6),0 34px 60px -26px rgba(0,0,0,.7);
   /* fonts: headings / italic accents / body / small uppercase labels */
   --serif:'Cormorant',Georgia,serif; --serif-2:'Cormorant',Georgia,serif;
   --sans:'Jost',system-ui,sans-serif; --mono:'Jost',system-ui,sans-serif;

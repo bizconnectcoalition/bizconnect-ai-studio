@@ -9,14 +9,20 @@
   /* accent (buttons, highlights, borders) */
   --accent:#C6972F; --accent-hi:#E7C878; --accent-glow:#F0DCA0; --accent-deep:#9C7521;
   /* text */
-  --text:#F7F6F2; --text-dim:#DDE0E6; --slate:#9BA6BC; --slate-dim:#6E7A93;
+  --text:#F7F6F2; --text-dim:#DDE0E6; --slate:#A7B1C6; --slate-dim:#6E7A93;
   --green:#5FB98A; --red:#E0776B;
   /* the same colours as r,g,b triplets, for translucent tints: rgba(var(--accent-rgb),.2) */
-  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:155,166,188;
+  --accent-rgb:198,151,47; --accent-hi-rgb:231,200,120; --text-rgb:247,246,242; --slate-rgb:167,177,198;
   --bg-950-rgb:10,20,40; --bg-700-rgb:22,38,74; --bg-600-rgb:34,64,108; --bg-raise-rgb:26,46,88;
   --ink-rgb:7,14,29; --overlay-rgb:5,10,22;
   --line:rgba(198,151,47,.22); --line-soft:rgba(155,166,188,.14);
-  --card:linear-gradient(165deg,rgba(22,38,74,.72),rgba(10,20,40,.92));
+  /* raised surfaces (cards, panels): clearly lighter than the page, crisp edge, layered shadow */
+  --card:linear-gradient(165deg,#223B70 0%,#1B3060 55%,#172A55 100%);
+  --card-border:rgba(255,255,255,.14); --card-border-hover:rgba(var(--accent-hi-rgb),.55);
+  --tier-fast-text:#8FE0B0;
+  --card-muted:#B7C1D4;                 /* secondary text on cards (readable on the lighter surface) */
+  --shadow-card:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.55),0 22px 44px -22px rgba(0,0,0,.65);
+  --shadow-card-hover:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.45),0 16px 30px -8px rgba(0,0,0,.6),0 34px 60px -26px rgba(0,0,0,.7);
   /* fonts: --serif = headings, --serif-2 = italic accents, --sans = body, --mono = small labels */
   --serif:'Marcellus',serif; --serif-2:'Cormorant Garamond',serif;
   --sans:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
