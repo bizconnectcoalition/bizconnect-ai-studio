@@ -20,7 +20,7 @@
   --card:linear-gradient(165deg,#223B70 0%,#1B3060 55%,#172A55 100%);
   --card-border:rgba(255,255,255,.14); --card-border-hover:rgba(var(--accent-hi-rgb),.55);
   --tier-fast-text:#8FE0B0;
-  --ico-sat:.9;                         /* studio icon tiles: vivid, each studio its own color */
+  --ico-sat:1;                          /* studio icon tiles: rich jewel tones, each studio its own color */
   --card-muted:#B7C1D4;                 /* secondary text on cards (readable on the lighter surface) */
   --shadow-card:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.55),0 22px 44px -22px rgba(0,0,0,.65);
   --shadow-card-hover:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.45),0 16px 30px -8px rgba(0,0,0,.6),0 34px 60px -26px rgba(0,0,0,.7);

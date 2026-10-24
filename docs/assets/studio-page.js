@@ -13,7 +13,7 @@
   $("#crumb").textContent = S.name;
   $("#s-name").textContent = `${S.name} Studio`;
   $("#s-tag").textContent = S.blurb;
-  $("#s-ico").innerHTML = BCAI.art(S); $("#s-ico").classList.add("tile"); if (S.hue != null && Number.isFinite(+S.hue)) $("#s-ico").style.setProperty("--h", +S.hue);
+  $("#s-ico").innerHTML = BCAI.art(S); $("#s-ico").classList.add("tile"); $("#s-ico").style.cssText = BCAI.tileVars(S);
   $("#empty-ico").innerHTML = svg(S.icon);
   // Tool tabs follow Simple/Advanced mode; the open studio always shows, even if Simple mode hides it.
   function drawSwitcher() {

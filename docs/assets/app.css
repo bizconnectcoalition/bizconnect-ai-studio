@@ -76,18 +76,19 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .card .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(var(--accent-rgb),.08);color:var(--accent-hi)}
 .card .ico svg{width:22px;height:22px}
 /* studio icon tiles: each studio's own color (--h from studios.js); a brand tunes them with --ico-sat (0 grey … 1 vivid) and --ico-l (lightness, 1 = normal) */
-.ico.tile,.studio-head .ico.tile{--s:var(--ico-sat,1);--L:var(--ico-l,1);--ico-bg:hsl(var(--h,220) calc(52%*var(--s)) calc(42%*var(--L)));width:52px;height:52px;border-radius:15px;color:#fff;
-  border:1px solid hsl(var(--h,220) calc(70%*var(--s)) 74% / .4);
-  background:radial-gradient(130% 120% at 25% 12%,hsl(var(--h,220) calc(70%*var(--s)) calc(56%*var(--L))),hsl(var(--h,220) calc(55%*var(--s)) calc(40%*var(--L))) 60%,hsl(var(--h,220) calc(50%*var(--s)) calc(30%*var(--L))));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -8px 14px -10px rgba(0,0,0,.3),0 6px 14px -4px rgba(0,0,0,.5)}
-.ico.tile svg{width:30px;height:30px}
+.ico.tile,.studio-head .ico.tile{--s:calc(var(--ico-sat,1)*var(--ts,1));--L:calc(var(--ico-l,1)*var(--tl,1));--ico-bg:hsl(calc(var(--h,220) + 3) calc(83%*var(--s)) calc(44%*var(--L)));background-color:hsl(220 50% 35%);width:52px;height:52px;border-radius:15px;color:#fff;
+  border:1px solid hsl(calc(var(--h,220) + 8) calc(85%*var(--s)) 72% / .5);
+  background:radial-gradient(90% 55% at 30% 0%,rgba(255,255,255,.28),rgba(255,255,255,0) 70%),
+    linear-gradient(160deg,hsl(calc(var(--h,220) + 10) calc(88%*var(--s)) calc(51%*var(--L))) 0%,hsl(var(--h,220) calc(80%*var(--s)) calc(39%*var(--L))) 52%,hsl(calc(var(--h,220) - 12) calc(85%*var(--s)) calc(24%*var(--L))) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -10px 16px -10px rgba(0,0,0,.45),0 6px 14px -4px rgba(0,0,0,.55),0 2px 4px rgba(0,0,0,.3)}
+.ico.tile svg{width:30px;height:30px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
 .art .l{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.art .d{fill:rgba(255,255,255,.34)}
+.art .d{fill:rgba(255,255,255,.3)}
 .art .k{fill:#fff}
 .art .w{fill:rgba(255,255,255,.85)}
 .art .o{opacity:.55}
 .art .p{fill:var(--ico-bg)}
-@media (forced-colors:active){.art .k,.art .w{fill:CanvasText}.art .d{fill:none}.art .p{fill:Canvas}.art .o{opacity:1}}
+@media (forced-colors:active){.art .k,.art .w{fill:CanvasText}.art .d{fill:none}.art .p{fill:Canvas;stroke:Canvas!important}.ico.tile svg{filter:none}.art .o{opacity:1}}
 .card h3{font-size:19px;margin-top:4px}
 .card p{font-size:13px;color:var(--card-muted,var(--slate));line-height:1.45}
 .card .price{margin-top:auto;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--accent-hi)}

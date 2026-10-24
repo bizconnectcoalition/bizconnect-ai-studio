@@ -27,8 +27,8 @@
   --card-border-hover:rgba(var(--accent-hi-rgb),.55);        /* (optional) hover edge; default --line */
   --card-muted:#B8BFC9;            /* (optional) secondary text on cards: ≥ 4.5:1 on the LIGHTEST card stop; default --slate */
   --tier-fast-text:#8FE0B0;        /* (optional) "FAST" tag text on its green tint; default --green */
-  --ico-sat:.9;                    /* (optional) color strength of the studio icon tiles, a plain number (NOT a %): 1 vivid, .5 soft/elegant, 0 grey; default 1.
-                                      --ico-l (optional, plain number, default 1) lifts or darkens the tiles, e.g. 1.08 with soft colors.
+  --ico-sat:1;                     /* (optional) color strength of the studio icon tiles, a plain number (NOT a %): 1 rich/vivid, .65 rich but earthy, .5 soft, 0 grey; default 1.
+                                      --ico-l (optional, plain number, default 1) lifts or darkens the tiles (Root & Bloom: --ico-sat:.68; --ico-l:.98). Above 1, check the white icons stay readable on yellow/green tiles.
                                       Each studio's tile color (hue) is in docs/assets/studios.js; a brand can change one via BRAND.studios overrides */
   /* (optional) layered shadows; usually leave as is. Default: no shadow at rest, --shadow-md on hover */
   --shadow-card:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.45),0 8px 18px -6px rgba(0,0,0,.55),0 22px 44px -22px rgba(0,0,0,.65);

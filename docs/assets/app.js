@@ -28,7 +28,9 @@
   applyBrand();
   // The studio's big card icon: detailed art on a colored tile (falls back to the line icon).
   const art = (s) => s.art ? `<svg class="art" viewBox="0 0 32 32" aria-hidden="true">${s.art}</svg>` : svg(s.icon || "");
-  const tileStyle = (s) => (s.hue !== "" && s.hue != null && Number.isFinite(+s.hue) ? ` style="--h:${+s.hue}"` : "");
+  const num = (v) => v !== "" && v != null && Number.isFinite(+v);
+  const tileVars = (s) => [["--h", s.hue], ["--ts", s.sat], ["--tl", s.tone]].filter(([, v]) => num(v)).map(([k, v]) => `${k}:${+v}`).join(";");
+  const tileStyle = (s) => (tileVars(s) ? ` style="${tileVars(s)}"` : "");
   const svg = (paths, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -787,5 +789,5 @@
     window.BCAI.askGuide = openChat;
   }
 
-  window.BCAI = { brand: B, asset, mode, setMode, visibleStudios, simpleIds, hasSimple, modeToggle, api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, art, tileStyle, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, guide, tool, plain, saveWord, useIn, announce };
+  window.BCAI = { brand: B, asset, mode, setMode, visibleStudios, simpleIds, hasSimple, modeToggle, api, loadCatalog, credits, dollars, unitLabel, fromPrice, engineFor, generate, progressHTML, upload, renderOutput, thumbHTML, header, footer, gate, whenSignedIn, refreshMe, setUser, svg, art, tileStyle, tileVars, esc, $, get user() { return user; }, get catalog() { return catalog; }, signOut, copyText, guide, tool, plain, saveWord, useIn, announce };
 })();
