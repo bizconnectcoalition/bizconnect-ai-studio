@@ -15,10 +15,6 @@
     const simple = BCAI.mode() === "simple";
     grid.classList.toggle("simple", simple);
     grid.style.setProperty("--simple-cols", Math.min(list.length, 4));
-    const total = STUDIOS.length;
-    $("#studio-count").parentElement.innerHTML = simple
-      ? `<b id="studio-count">${list.length}</b> starter tools · ${total - list.length} more a click away`
-      : `<b id="studio-count">${total}</b> creative tools`;
     // Card = a plain container; its title is the real button, stretched over the whole card (CSS ::after),
     // so the separate "Example" button never sits inside another button.
     BCAI_PREVIEW.hide();
@@ -35,8 +31,9 @@
       c.querySelector(".card-hit").onclick = () => { BCAI_PREVIEW.hide(); toggle(c.dataset.id); };
       BCAI_PREVIEW.attach(c, c.dataset.id, c.querySelector(".ex-btn"));
     });
-    $("#hover-hint").textContent = list.some((s) => BCAI_PREVIEW.has(s.id))
-      ? (BCAI_PREVIEW.canHover ? "Rest your mouse on any card to see an example of what it makes." : "Tap ▶ Example on any card to see what it makes.") : "";
+    $("#hover-hint").textContent = !list.some((s) => BCAI_PREVIEW.has(s.id)) ? "Click any card to try it right here."
+      : !BCAI_PREVIEW.sheet() ? "Click a card to try it right here, or rest your mouse on it to see an example."
+      : `${BCAI_PREVIEW.canHover ? "Click" : "Tap"} a card to try it, or ▶ ${exLabel} to see what it makes.`;
     openId = null;
     const more = $("#more-tools");
     const starters = BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ");

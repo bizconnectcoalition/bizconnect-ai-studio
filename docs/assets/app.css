@@ -55,20 +55,21 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .user-dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-hi),var(--accent-deep));color:var(--bg-950);font-weight:700;font-size:13px;cursor:pointer;border:none}
 
 /* ---------- hero ---------- */
-.hero{padding:64px 24px 34px;text-align:center}
-.hero h1{font-size:clamp(36px,5vw,58px);margin:16px 0 14px}
+.hero{padding:26px 24px 0;text-align:center}
+.hero .eyebrow:empty{display:none}
+.hero h1{font-size:clamp(28px,3.2vw,40px);margin:0 0 8px;text-wrap:balance}
+.hero .eyebrow + h1{margin-top:10px}
 .hero h1 em{font-style:normal;color:var(--accent-hi)}
-.hero p.lead{font-size:17px;color:var(--text-dim);max-width:640px;margin:0 auto}
+.hero p.lead{font-size:16px;color:var(--text-dim);max-width:760px;margin:0 auto;text-wrap:balance}
 .ask-bar{max-width:760px;margin:30px auto 0;display:flex;gap:10px;background:rgba(var(--bg-950-rgb),.75);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow-md)}
 .ask-bar input{flex:1;background:none;border:none;outline:none;font-size:16px;padding:10px 12px;color:var(--text)}
 .ask-bar input::placeholder{color:var(--slate-dim)}
-.hero-meta{display:flex;justify-content:center;gap:34px;margin-top:26px;flex-wrap:wrap}
-.hero-meta div{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
-.hero-meta b{color:var(--accent-hi);font-weight:600}
 
 /* ---------- studio cards ---------- */
 .section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:28px 0 18px;flex-wrap:wrap}
 .section-head h2{font-size:28px}
+.pick-head{align-items:center;margin:20px 0 8px}
+.pick-head h2{font-size:22px}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;grid-auto-flow:dense}
 .card{background:var(--card);border:1px solid var(--card-border,var(--line-soft));box-shadow:var(--shadow-card,none);border-radius:var(--r);padding:20px 18px 18px;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;position:relative;display:flex;flex-direction:column;gap:10px;min-height:178px;text-align:left}
 .card:hover{transform:translateY(-3px);border-color:var(--card-border-hover,var(--line));box-shadow:var(--shadow-card-hover,var(--shadow-md))}
@@ -105,7 +106,6 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .quick-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px;flex-wrap:wrap;font-size:13px}
 
 /* ---------- Simple / Advanced mode ---------- */
-.head-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 .mode-toggle{display:inline-flex;border:1px solid var(--line);border-radius:100px;padding:3px;background:rgba(var(--ink-rgb),.55)}
 .mode-toggle:empty{display:none}
 .mode-toggle button{border:none;background:none;color:var(--text-dim);font:600 13px var(--sans);padding:7px 16px;border-radius:100px;cursor:pointer;transition:background .2s,color .2s}
@@ -135,7 +135,7 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(var(--bg-950-rgb),.8
 .card-hit:focus-visible{outline:none}
 .card:has(.card-hit:focus-visible){outline:2px solid var(--accent-hi);outline-offset:3px}
 .card .ex-btn{position:relative;z-index:2}
-.hover-hint{font-size:13px;color:var(--slate);margin:-6px 0 12px}
+.hover-hint{font-size:13px;color:var(--slate);margin:0 0 12px}
 .hover-hint:empty{display:none}
 .ex-btn.big{font-size:13px;padding:8px 14px 8px 11px}
 .pv-ai{position:absolute;left:8px;top:8px;font:600 10px var(--sans);letter-spacing:.04em;color:#fff;background:rgba(0,0,0,.55);border-radius:4px;padding:2px 6px}
@@ -461,10 +461,15 @@ footer.bot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:w
   .wallet-chip .lbl{display:none}
   .packs{grid-template-columns:1fr}
   .kit-grid{grid-template-columns:1fr}
-  .hero{padding-top:40px}
+  .hero{padding-top:20px}
+  .hero p.lead{font-size:15px}
+  .hero .eyebrow{font-size:10.5px;letter-spacing:.16em;gap:8px}
+  .hero .eyebrow::before{width:14px}
+  .pick-head{margin-top:16px}
+  .pick-head h2{font-size:19px}
 }
 @media (max-width:420px){.cards{grid-template-columns:1fr}.card{min-height:0}}
-@media (max-width:720px){.cards.simple{grid-template-columns:1fr}.cards.simple .card{min-height:0}.head-side{align-items:flex-start}.more-btn{width:100%}}
+@media (max-width:720px){.cards.simple{grid-template-columns:1fr}.cards.simple .card{min-height:0}.more-btn{width:100%}}
 
 /* ---------- copy / download / share tools on every result ---------- */
 .out-meta .actions{display:flex;gap:8px;flex-wrap:wrap}

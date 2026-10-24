@@ -16,9 +16,9 @@ window.BRAND = {
   pageTitle: "BizConnect AI Studio — Every AI tool, one simple place",
   description: "Create images, videos, voiceovers, talking avatars, music, slide decks and more with the world's leading AI models, in one simple studio by Biz Connect Coalition.",
   hero: {
-    eyebrow: "Biz Connect Coalition · AI Studio",
-    titleHtml: "Every AI tool your business needs.<br><em>One simple studio.</em>",
-    lead: "No need to learn ChatGPT, Claude, Gemini or ElevenLabs separately. Pick what you want to make, describe it in plain English, and the studio handles the rest.",
+    eyebrow: "",                          // the logo already names the studio
+    titleHtml: "Every AI tool your business needs. <em>One simple studio.</em>",
+    lead: "Flyers, videos, emails and more. Just describe what you want. No subscription: pay only for what you create.",
   },
   footer: "© {year} Biz Connect Coalition · BizConnect AI Studio (prototype)",
   gate: {

@@ -17,9 +17,9 @@ window.BRAND = {
   description: "TODO: one sentence for link previews.",
   noindex: true,                        // keep search engines away until the business approves the site (delete when live for real)
   hero: {                               // the home page's headline block
-    eyebrow: "Acme · AI Studio",
-    titleHtml: "Every AI tool your business needs.<br><em>One simple studio.</em>", // <em> = accent color
-    lead: "TODO: two sentences in the customer's own words about what they can make here.",
+    eyebrow: "",                          // optional small line above the headline; usually leave empty (the logo already names the studio)
+    titleHtml: "Every AI tool your business needs. <em>One simple studio.</em>", // one line on desktop (keep it under ~55 characters); <em> = accent color
+    lead: "TODO: ONE short sentence (under ~110 characters) in the customer's own words about what they can make here.",
   },
   footer: "Preview prototype prepared for Acme Co.", // {year} = current year. Don't claim the business's copyright until they approve
   gate: {                               // the sign-in box

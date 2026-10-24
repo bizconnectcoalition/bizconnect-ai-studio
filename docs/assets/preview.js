@@ -203,5 +203,5 @@
     if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); (cur?.id === id && pinned) ? hide(true) : show(id, card, true); });
   }
 
-  window.BCAI_PREVIEW = { attach, hide, has: (id) => Boolean(DATA[id]), canHover: CAN_HOVER, onTry: (fn) => (onTry = fn) };
+  window.BCAI_PREVIEW = { attach, hide, has: (id) => Boolean(DATA[id]), canHover: CAN_HOVER, sheet: useSheet, onTry: (fn) => (onTry = fn) };
 })();
