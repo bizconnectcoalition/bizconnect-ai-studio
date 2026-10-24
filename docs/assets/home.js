@@ -19,15 +19,21 @@
     $("#studio-count").parentElement.innerHTML = simple
       ? `<b id="studio-count">${list.length}</b> starter tools · ${total - list.length} more a click away`
       : `<b id="studio-count">${total}</b> creative tools`;
+    // A card is a div with role=button (not a <button>) so it can hold its own "Example" button.
+    BCAI_PREVIEW.hide();
     grid.innerHTML = list.map((s) => `
-      <button class="card" data-id="${s.id}" aria-expanded="false">
+      <div class="card" role="button" tabindex="0" data-id="${s.id}" aria-expanded="false">
         <span class="ico">${svg(s.icon)}</span>
         <h3>${esc(s.name)}</h3>
         <p>${esc(s.tagline)}</p>
         ${simple ? `<p class="card-blurb">${esc(s.blurb)}</p>` : ""}
-        <span class="price" data-price="${s.id}"></span>
-      </button>`).join("");
-    grid.querySelectorAll(".card").forEach((c) => (c.onclick = () => toggle(c.dataset.id)));
+        <div class="card-foot"><span class="price" data-price="${s.id}"></span>${BCAI_PREVIEW.has(s.id) ? `<button type="button" class="ex-btn" aria-label="See an example of ${esc(s.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Example</button>` : ""}</div>
+      </div>`).join("");
+    grid.querySelectorAll(".card").forEach((c) => {
+      c.onclick = () => { BCAI_PREVIEW.hide(); toggle(c.dataset.id); };
+      c.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === c) { e.preventDefault(); c.onclick(); } };
+      BCAI_PREVIEW.attach(c, c.dataset.id, c.querySelector(".ex-btn"));
+    });
     openId = null;
     const more = $("#more-tools");
     const starters = BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ");
@@ -44,6 +50,11 @@
     document.querySelectorAll("[data-price]").forEach((el) => (el.textContent = BCAI.fromPrice(el.dataset.price)));
   }
   document.addEventListener("bcai:mode", () => drawCards());
+  // "Try it yourself" in a preview opens that tool's quick-create panel (switching to All tools if it's hidden).
+  BCAI_PREVIEW.onTry((id) => {
+    if (!grid.querySelector(`.card[data-id="${id}"]`)) BCAI.setMode("advanced", false);
+    if (openId !== id) toggle(id);
+  });
 
   function columns() { return getComputedStyle(grid).gridTemplateColumns.split(" ").length; }
 

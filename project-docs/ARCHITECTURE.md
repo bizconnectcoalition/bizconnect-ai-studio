@@ -30,6 +30,13 @@ Every studio opens in **Simple mode**: the home page shows only the brand's star
 - If a brand hides studios until only its starter tools remain, the switch disappears.
 - Inside a studio, Simple mode replaces the AI-engine cards with one **"AI model (optional)" dropdown**. It is pre-set to the recommended low-cost model (`DEFAULT_ENGINE` in `controls.js`), and each option reads like "Quick · Gemini Flash · about 2 credits / reply" (Quick / Better / Best = the engine's fast / balanced / premium tier). All-tools mode shows the full engine cards.
 
+## Example previews on the studio cards
+Resting the mouse on a studio card for a moment opens a small **"Example"** popover: *You type → You get* for that tool. Chat shows a conversation; Images shows a prompt and the picture; Video and Talking Avatar play a short muted clip (with a **Sound on** button for the avatar); Voiceover and Music show the prompt and a **▶ play** button (browsers won't play sound on hover); Slide Decks show three mini slides; Translate, Sales Outreach and Brand Kit show their typical results. The popover's **"Try … yourself →"** opens that tool.
+- Phones/tablets (no hover) and keyboards: each card has a small **▶ Example** button; on screens ≤720px the preview opens as a bottom sheet. Esc or × closes it.
+- Code: `docs/assets/preview.js` (behaviour), example data in `docs/assets/previews.js` (`CORE_PREVIEWS`, all about a made-up "Maple & Main Bakery"), media in `docs/assets/previews/` (≈1 MB total). Media loads only when a preview opens.
+- A brand replaces any tool's example with `BRAND.previews.<studio>` (same fields; `src`/`logo` paths are relative to `docs/`, e.g. `brands/rootbloom/previews/image.webp`). Missing media degrades to "Example coming soon".
+- The sample media were made with Google Gemini (images) and Gemini video (clips; the Voiceover and Music samples are the audio track of a clip and a Gemini music track) on 2026-10-23.
+
 ## The Worker and brands
 - Every POST body carries `brand: "<id>"` (added automatically by `api()` in `app.js`).
 - `BRANDS` in `worker/src/index.js` maps ids to `{product, about, audience, guide, presenter}`. Used for:

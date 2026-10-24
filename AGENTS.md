@@ -39,6 +39,7 @@ R:\Documents\Claude\Projects\Bizconnect\
 | Change how every studio works | 1) edit the core (`docs/assets/*`, `docs/*.html`) 2) screenshot-compare BizConnect (rule 3) 3) commit + push **this** repo (BizConnect goes live) 4) `tools\sync-client.ps1` for each client, check it, commit + push each client repo. `tools\sync-client.ps1 -Check` lists clients that are behind |
 | Change a client's wording or colors | Only in that client's folder: `docs\brands\<id>\` → commit + push the client repo (no sync needed) |
 | Change which tools Simple mode shows | `simpleStudios` in that brand's `brand.js` (default chat, image, video); `defaultMode: "advanced"` to start with all tools |
+| Change the hover examples on the cards | Core: `docs/assets/previews.js` + `docs/assets/previews/`. One brand: `previews` in its `brand.js` |
 | Make a studio for a new business | Follow `project-docs/WHITE_LABEL.md` step by step |
 | Change AI engines or prices | `ENGINES` in `worker/src/index.js`, then `npx wrangler deploy` from `worker/` (separate from pushing the site; it affects **every** studio at once) |
 | Give a brand its own concierge voice | Add it to `BRANDS` in `worker/src/index.js`, then deploy the Worker (required for every new client) |

@@ -55,6 +55,10 @@ window.BRAND = {
   // or null = members must upload their own photo.
   presenter: null,
 
+  // Hover examples on the studio cards. Leave out to use the core examples (a made-up bakery), or give
+  // any studio its own: previews: { chat: { kind: "chat", prompt: "…", reply: "…" }, image: { kind: "image", prompt: "…", src: "brands/acme/previews/image.webp" } }
+  // Field reference: docs/assets/previews.js.
+
   // Simple mode (the default view) shows only these starter tools, with a button for the rest.
   // Pick 3, in order of what this business's customers do most; never list a studio that is also in studios.hide.
   // Default: chat, image, video. defaultMode: "advanced" opens with every tool showing instead.
