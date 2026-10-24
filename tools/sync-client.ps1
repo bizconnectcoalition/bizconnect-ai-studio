@@ -51,7 +51,15 @@ function Hash($path) {   # text: line endings normalised (a CRLF vs LF checkout 
 function OwnedFiles($clientRoot) {   # core files this client has taken over (CLIENT_OWNED.txt)
   $f = Join-Path $clientRoot 'CLIENT_OWNED.txt'
   if (-not (Test-Path $f)) { return @() }
-  @(Get-Content $f -Encoding UTF8 | ForEach-Object { (($_ -replace '#.*$', '').Trim()).Replace('/', '\') } | Where-Object { $_ })
+  @(Get-Content $f -Encoding UTF8 | ForEach-Object {
+      $x = (($_ -replace '#.*$', '').Trim()).Replace('/', '\')
+      do { $y = $x; $x = $x -replace '^(\.\\|\\|docs\\)', '' } while ($x -ne $y)   # accept ./x, /x, docs/x
+      $x } | Where-Object { $_ })
+}
+function ManifestRows($clientDocs) {   # "hash path" per core file; "@hash path" = core's hash of a client-owned file
+  $m = Join-Path $clientDocs 'CORE_FILES.txt'
+  if (-not (Test-Path $m)) { return @() }
+  @(Get-Content $m -Encoding UTF8 | Where-Object { $_ } | ForEach-Object { $h, $rel = $_ -split ' ', 2; [pscustomobject]@{ Hash = $h.TrimStart('@'); Owned = $h.StartsWith('@'); Rel = $rel } })
 }
 function CoreFiles {   # the files sync owns, relative to docs\ (everything except brands\)
   Get-ChildItem $core -Recurse -File | Where-Object { $_.FullName -notlike (Join-Path $core 'brands\*') } |
@@ -69,7 +77,11 @@ if ($Check) {
     $line = (Get-Content $v -TotalCount 1 -Encoding UTF8)
     $state = if ($line -match "core $([regex]::Escape($rev)) ") { 'OK' } else { 'STALE (re-sync it)' }
     $own = OwnedFiles $d.FullName
-    $note = if ($own.Count) { "   customised: $($own -join ', ')" } else { '' }
+    $rows = ManifestRows (Join-Path $d.FullName 'docs')
+    $own2 = foreach ($o in $own) {   # flag owned files whose core version has moved on since the client took them over
+      $r = $rows | Where-Object { $_.Rel -eq $o -and $_.Owned }; $cf = Join-Path $core $o
+      if ($r -and (Test-Path $cf) -and (Hash $cf) -ne $r.Hash) { "$o (core has changed since; compare)" } else { $o } }
+    $note = if ($own.Count) { "   customised: $($own2 -join ', ')" } else { '' }
     Write-Host ("  {0,-28} {1}   [{2}]{3}" -f $d.Name, $state, $line, $note)
   }
   return
@@ -82,23 +94,35 @@ $brandDir = Join-Path $clientDocs "brands\$BrandId"
 if (-not (Test-Path (Join-Path $brandDir 'brand.js'))) { throw "Missing $brandDir\brand.js - create the brand folder first (copy tools\brand-template)." }
 if (CoreDirty) { Write-Warning 'The core has uncommitted changes in docs\. Commit the core first so CORE_VERSION.txt names a real commit.' }
 $owned = OwnedFiles $Client
-if ($owned -contains 'brand.js') { throw 'brand.js (the loader) cannot be client-owned; customise docs\brands\<id>\ instead.' }
+$coreList = @(CoreFiles)
+foreach ($o in $owned) {
+  if ($o -match '(^|\\)\.\.(\\|$)' -or [IO.Path]::IsPathRooted($o)) { throw "CLIENT_OWNED.txt: '$o' points outside docs\. List paths like assets/app.css." }
+  if ($o -eq 'brand.js') { throw 'brand.js (the loader) cannot be client-owned; customise docs\brands\<id>\ instead.' }
+  if ($o -like 'brands\*') { throw "CLIENT_OWNED.txt: '$o' is in brands\ (always the client's own); remove the line." }
+  if (Test-Path (Join-Path $core $o) -PathType Container) { throw "CLIENT_OWNED.txt: '$o' is a folder; list individual files." }
+  if ($coreList -notcontains $o) { Write-Warning "CLIENT_OWNED.txt: '$o' is not a core file (typo?). Ignoring it." }
+}
+$owned = @($owned | Where-Object { $coreList -contains $_ })
 if ($owned.Count) { Write-Host "Keeping the client's own version of: $($owned -join ', ')" }
 
 # ---------- refuse to overwrite hand edits (unless -Force) ----------
 $manifest = Join-Path $clientDocs 'CORE_FILES.txt'
 if ((Test-Path $manifest) -and -not $Force) {
-  $edited = foreach ($row in Get-Content $manifest -Encoding UTF8) {
-    $h, $rel = $row -split ' ', 2
-    $p = Join-Path $clientDocs $rel
-    if (($owned -notcontains $rel) -and (Test-Path $p) -and (Hash $p) -ne $h) { $rel }
+  # (a file that was owned and is now handed back counts too: its recorded hash is the core's, so an edited copy differs)
+  $edited = foreach ($r in ManifestRows $clientDocs) {
+    $p = Join-Path $clientDocs $r.Rel
+    if (($owned -notcontains $r.Rel) -and (Test-Path $p) -and (Hash $p) -ne $r.Hash) { $r.Rel }
   }
   if ($edited) { throw "These core files were edited by hand in the client since the last sync:`n  $($edited -join "`n  ")`nKeep the edit: add the path to $Client\CLIENT_OWNED.txt. Share it with every studio: move it into the core. Discard it: re-run with -Force." }
 }
 
 # ---------- copy ----------
 $keep = @{}                                                       # client-owned files: hold them while assets\ is rebuilt
-foreach ($rel in $owned) { $p = Join-Path $clientDocs $rel; if (Test-Path $p) { $keep[$rel] = [IO.File]::ReadAllBytes($p) } }
+foreach ($rel in $owned) {
+  $p = Join-Path $clientDocs $rel
+  if (Test-Path $p -PathType Leaf) { $keep[$rel] = [IO.File]::ReadAllBytes($p) }
+  else { Write-Warning "Owned file $rel is missing in the client; restoring the core's version so the studio still works."; $keep[$rel] = [IO.File]::ReadAllBytes((Join-Path $core $rel)) }
+}
 $assets = Join-Path $clientDocs 'assets'
 if (Test-Path $assets) { Remove-Item $assets -Recurse -Force }   # stale core files must not linger
 foreach ($rel in CoreFiles) {
@@ -117,6 +141,7 @@ New-Item -ItemType File -Force (Join-Path $clientDocs '.nojekyll') | Out-Null   
 # ---------- stamp + manifest ----------
 $rev = CoreRev
 [IO.File]::WriteAllText((Join-Path $clientDocs 'CORE_VERSION.txt'), "Synced from bizconnect-ai-studio core $rev on $(Get-Date -Format 'yyyy-MM-dd HH:mm')`n", $utf8)
-$rows = foreach ($rel in (CoreFiles) + @('brand.js')) { if ($owned -notcontains $rel) { "$(Hash (Join-Path $clientDocs $rel)) $rel" } }
+$rows = foreach ($rel in (CoreFiles) + @('brand.js')) {
+  if ($owned -contains $rel) { "@$(Hash (Join-Path $core $rel)) $rel" } else { "$(Hash (Join-Path $clientDocs $rel)) $rel" } }
 [IO.File]::WriteAllText($manifest, (($rows | Sort-Object -Unique) -join "`n") + "`n", $utf8)
 Write-Host "Synced core $rev -> $clientDocs (brand: $BrandId). Now open it locally, check it, then commit + push the client repo."

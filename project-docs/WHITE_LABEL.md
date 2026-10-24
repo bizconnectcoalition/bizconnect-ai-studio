@@ -124,7 +124,9 @@ The template is where every studio starts, not a rule that they must stay identi
    From then on `sync-client.ps1` never overwrites, deletes or hash-checks that file. The client keeps its version and still receives every other core improvement. `-Check` lists each client's customised files. To hand a file back to the core, delete its line and sync with `-Force`.
 3. **An improvement every studio should get**: make it in the core, test BizConnect, then sync each client.
 
-Keep owned files few. Each one stops receiving core fixes, so note *why* in the comment, and look at the core's version before taking it over.
+Keep owned files few. Each one stops receiving core fixes, so note *why* in the comment, and look at the core's version before taking it over. Create `CLIENT_OWNED.txt` only when a client first needs it (no file = nothing owned).
+- **Safety:** security lives in the shared Worker (passcode, credits, prices, uploads), which is never copied into clients and can't be client-owned, so owned front-end files can't weaken it.
+- Deleting a line does not silently overwrite the client's version: the next sync refuses (the file no longer matches) until someone re-runs with `-Force` on purpose.
 
 ## Keeping clients up to date
 After any core change, run `sync-client.ps1 -Check`, sync each client marked STALE (step 3), look at it (step 5), then commit and push each client repo.
