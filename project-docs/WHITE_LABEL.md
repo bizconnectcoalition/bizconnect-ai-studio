@@ -33,7 +33,7 @@ Then edit (every field is explained in the file):
   - Keep `noindex: true` until the business approves the site.
   - **Hover examples (`previews`)**: give every studio this business shows its own example. Any studio left out shows the core *bakery* example, which looks wrong on another business's site. Root & Bloom's `brand.js` is a full worked example; fields are listed at the top of `docs/assets/previews.js`. Put media in `docs\brands\<id>\previews\` and make it with `project-docs/PREVIEW_MEDIA.md`. Use `previews: { music: null }` to hide one, or `previews: false` for none.
   - Pick the 3 **starter tools** for Simple mode in `simpleStudios`: what this business's customers will do most, in that order. They must not also be in `studios.hide`.
-- `docs\brands\<id>\brand.css`: the color and font tokens. Cards and panels also have optional depth tokens (`--card-border`, `--card-muted`, `--shadow-card`…): copy them from the template and keep the cards clearly lighter than the page.
+- `docs\brands\<id>\brand.css`: the color and font tokens. Cards and panels also have optional depth tokens (`--card-border`, `--card-muted`, `--shadow-card`…) and studio icon tile tokens (`--ico-sat`, `--ico-l`): copy them from the template and keep the cards clearly lighter than the page.
   - The studio is a **dark** design: the brand's darkest color becomes the canvas (`--bg-*`), and its warmest or brightest color becomes `--accent`.
   - Keep text readable (`--text` on `--bg-900`).
 - `docs\brands\<id>\img\`:

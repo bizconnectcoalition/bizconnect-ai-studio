@@ -25,7 +25,7 @@
     const exLabel = simple ? "See an example" : "Example";
     grid.innerHTML = list.map((s) => `
       <div class="card" data-id="${s.id}">
-        <span class="ico">${svg(s.icon)}</span>
+        <span class="ico tile"${BCAI.tileStyle(s)}>${BCAI.art(s)}</span>
         <h3><button type="button" class="card-hit" aria-expanded="false">${esc(s.name)}</button></h3>
         <p>${esc(s.tagline)}</p>
         ${simple ? `<p class="card-blurb">${esc(s.blurb)}</p>` : ""}

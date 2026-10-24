@@ -67,6 +67,7 @@ window.BRAND = {
 
   // Per-studio wording. Any field from docs/assets/studios.js: tagline, blurb, placeholder, examples,
   // personas (chat), styles (image), genres/moods (music), languages (translate).
+  // Card icon: hue (tile color 0-360, e.g. chat: { hue: 200 }); icon (your own line icon; replaces the art) or art (32-grid duotone SVG).
   // hide: ["music", "outreach"] removes studios completely.
   studios: {
     // chat: { examples: ["…", "…", "…", "…"] },
