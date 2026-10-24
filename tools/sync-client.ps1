@@ -36,10 +36,11 @@ function CoreRev {
 function CoreDirty {
   try { $s = (& git -C $repo status --porcelain -- docs 2>$null); return [bool]$s } catch { return $false }
 }
-function Hash($path) {   # line endings normalised: a CRLF vs LF checkout must not look like a hand edit
-  $t = [IO.File]::ReadAllText($path) -replace "`r`n", "`n"
+function Hash($path) {   # text: line endings normalised (a CRLF vs LF checkout is not a hand edit); media: raw bytes
   $sha = [Security.Cryptography.SHA256]::Create()
-  ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($t)) | ForEach-Object { $_.ToString('X2') }) -join '' | ForEach-Object { $_.Substring(0, 16) }
+  if ($path -match '\.(js|css|html|txt|md|json)$') { $bytes = [Text.Encoding]::UTF8.GetBytes(([IO.File]::ReadAllText($path) -replace "`r`n", "`n")) }
+  else { $bytes = [IO.File]::ReadAllBytes($path) }
+  (($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString('X2') }) -join '').Substring(0, 16)
 }
 function CoreFiles {   # the files sync owns, relative to docs\ (everything except brands\)
   Get-ChildItem $core -Recurse -File | Where-Object { $_.FullName -notlike (Join-Path $core 'brands\*') } |

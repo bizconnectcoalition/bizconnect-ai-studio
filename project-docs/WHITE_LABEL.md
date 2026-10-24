@@ -31,7 +31,7 @@ Then edit (every field is explained in the file):
   - Write industry-specific example prompts in `studios`; they matter most for first impressions.
   - Avoid health, safety or "organic" product claims unless the business approves the wording.
   - Keep `noindex: true` until the business approves the site.
-  - Optional: `previews` gives the hover examples this business's flavour (see the Root & Bloom brand for a full example). Without it the studio shows the core bakery examples.
+  - **Hover examples (`previews`)**: give every studio this business shows its own example. Any studio left out shows the core *bakery* example, which looks wrong on another business's site. Root & Bloom's `brand.js` is a full worked example; fields are listed at the top of `docs/assets/previews.js`. Put media in `docs\brands\<id>\previews\` and make it with `project-docs/PREVIEW_MEDIA.md`. Use `previews: { music: null }` to hide one, or `previews: false` for none.
   - Pick the 3 **starter tools** for Simple mode in `simpleStudios`: what this business's customers will do most, in that order. They must not also be in `studios.hide`.
 - `docs\brands\<id>\brand.css`: the color and font tokens.
   - The studio is a **dark** design: the brand's darkest color becomes the canvas (`--bg-*`), and its warmest or brightest color becomes `--accent`.

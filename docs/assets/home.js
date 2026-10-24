@@ -19,21 +19,24 @@
     $("#studio-count").parentElement.innerHTML = simple
       ? `<b id="studio-count">${list.length}</b> starter tools · ${total - list.length} more a click away`
       : `<b id="studio-count">${total}</b> creative tools`;
-    // A card is a div with role=button (not a <button>) so it can hold its own "Example" button.
+    // Card = a plain container; its title is the real button, stretched over the whole card (CSS ::after),
+    // so the separate "Example" button never sits inside another button.
     BCAI_PREVIEW.hide();
+    const exLabel = simple ? "See an example" : "Example";
     grid.innerHTML = list.map((s) => `
-      <div class="card" role="button" tabindex="0" data-id="${s.id}" aria-expanded="false">
+      <div class="card" data-id="${s.id}">
         <span class="ico">${svg(s.icon)}</span>
-        <h3>${esc(s.name)}</h3>
+        <h3><button type="button" class="card-hit" aria-expanded="false">${esc(s.name)}</button></h3>
         <p>${esc(s.tagline)}</p>
         ${simple ? `<p class="card-blurb">${esc(s.blurb)}</p>` : ""}
-        <div class="card-foot"><span class="price" data-price="${s.id}"></span>${BCAI_PREVIEW.has(s.id) ? `<button type="button" class="ex-btn" aria-label="See an example of ${esc(s.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Example</button>` : ""}</div>
+        <div class="card-foot"><span class="price" data-price="${s.id}"></span>${BCAI_PREVIEW.has(s.id) ? `<button type="button" class="ex-btn${simple ? " big" : ""}" aria-label="See an example of ${esc(s.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>${exLabel}</button>` : ""}</div>
       </div>`).join("");
     grid.querySelectorAll(".card").forEach((c) => {
-      c.onclick = () => { BCAI_PREVIEW.hide(); toggle(c.dataset.id); };
-      c.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === c) { e.preventDefault(); c.onclick(); } };
+      c.querySelector(".card-hit").onclick = () => { BCAI_PREVIEW.hide(); toggle(c.dataset.id); };
       BCAI_PREVIEW.attach(c, c.dataset.id, c.querySelector(".ex-btn"));
     });
+    $("#hover-hint").textContent = list.some((s) => BCAI_PREVIEW.has(s.id))
+      ? (BCAI_PREVIEW.canHover ? "Rest your mouse on any card to see an example of what it makes." : "Tap ▶ Example on any card to see what it makes.") : "";
     openId = null;
     const more = $("#more-tools");
     const starters = BCAI.simpleIds().map((id) => STUDIO_BY_ID[id].name).join(", ");
@@ -51,16 +54,19 @@
   }
   document.addEventListener("bcai:mode", () => drawCards());
   // "Try it yourself" in a preview opens that tool's quick-create panel (switching to All tools if it's hidden).
-  BCAI_PREVIEW.onTry((id) => {
+  // "Make one like this" in a preview opens that tool's quick panel with the example prompt filled in.
+  BCAI_PREVIEW.onTry((id, prompt) => {
     if (!grid.querySelector(`.card[data-id="${id}"]`)) BCAI.setMode("advanced", false);
     if (openId !== id) toggle(id);
+    const input = grid.querySelector(".quick [name=p]");
+    if (input && prompt) { input.value = prompt; input.dispatchEvent(new Event("input")); input.focus(); }
   });
 
   function columns() { return getComputedStyle(grid).gridTemplateColumns.split(" ").length; }
 
   function toggle(id) {
     grid.querySelector(".quick")?.remove();
-    grid.querySelectorAll(".card").forEach((c) => { c.classList.remove("open"); c.setAttribute("aria-expanded", "false"); });
+    grid.querySelectorAll(".card").forEach((c) => { c.classList.remove("open"); c.querySelector(".card-hit")?.setAttribute("aria-expanded", "false"); });
     if (openId === id) { openId = null; return; }
     openId = id;
     const cards = [...grid.querySelectorAll(".card")];
@@ -69,7 +75,7 @@
     const cols = columns();
     const rowEnd = Math.min(cards.length - 1, Math.floor(idx / cols) * cols + cols - 1);
     cards[idx].classList.add("open");
-    cards[idx].setAttribute("aria-expanded", "true");
+    cards[idx].querySelector(".card-hit")?.setAttribute("aria-expanded", "true");
     const panel = document.createElement("div");
     panel.className = "quick";
     cards[rowEnd].after(panel);
