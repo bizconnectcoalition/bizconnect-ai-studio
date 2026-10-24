@@ -118,13 +118,38 @@
     back.hidden = !small;
     document.body.classList.toggle("pv-lock", small);
     if (small) { pv.style.left = pv.style.top = ""; return; }
-    const r = cur.anchor.getBoundingClientRect(), w = pv.offsetWidth, h = pv.offsetHeight, gap = 10, vw = window.innerWidth, vh = window.innerHeight;
-    let left = r.right + gap;
-    if (left + w > vw - 8) left = r.left - w - gap;           // not enough room on the right → left side
-    if (left < 8) left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), vw - w - 8); // neither → centred on the card
-    let top = left === r.right + gap || left === r.left - w - gap ? r.top : r.bottom + gap;
-    top = Math.min(Math.max(8, top), vh - h - 8);
-    pv.style.left = `${Math.round(left)}px`; pv.style.top = `${Math.round(top)}px`;
+    // Place it ABOVE or BELOW the card's row (kitty-corner to the card) so the cards beside it stay
+    // free to hover. Try each spot and keep the one that covers the fewest cards: covering the card
+    // itself or a card in the same row is the worst; covering a card in another row is mildly bad.
+    // If the space above/below is shorter than the popup, the popup shrinks to fit and scrolls inside.
+    pv.style.maxHeight = "";
+    const r = cur.anchor.getBoundingClientRect(), w = pv.offsetWidth, natural = pv.scrollHeight + 2, gap = 10, vw = window.innerWidth, vh = window.innerHeight;
+    const MIN_H = 160; // shorter than this is too cramped: use another spot (it scrolls inside)
+    const cards = [...(cur.anchor.parentElement?.querySelectorAll(".card") || [])].map((c) => ({ c, b: c.getBoundingClientRect() }));
+    const row = cards.filter(({ b }) => Math.abs(b.top - r.top) < 8);
+    const rowTop = Math.min(r.top, ...row.map(({ b }) => b.top)), rowBottom = Math.max(r.bottom, ...row.map(({ b }) => b.bottom));
+    const clampX = (x) => Math.min(Math.max(8, x), vw - w - 8);
+    const nearX = clampX(r.left + r.width / 2 - w / 2);                 // lined up with the card
+    const fullH = Math.min(natural, vh - 16);
+    const aboveH = Math.min(natural, rowTop - gap - 8), belowH = Math.min(natural, vh - 8 - rowBottom - gap);
+    const spots = [
+      aboveH >= MIN_H && { left: nearX, top: rowTop - gap - aboveH, h: aboveH },   // above the row
+      belowH >= MIN_H && { left: nearX, top: rowBottom + gap, h: belowH },         // below the row
+      { left: r.right + gap, top: r.top, h: fullH },                               // beside (last resort: covers a neighbour)
+      { left: r.left - w - gap, top: r.top, h: fullH },
+    ].filter(Boolean);
+    let best = null;
+    for (const s of spots) {
+      const box = { left: clampX(s.left), top: Math.min(Math.max(8, s.top), vh - s.h - 8), h: s.h };
+      const moved = Math.abs(box.left - s.left) + Math.abs(box.top - s.top); // had to be pushed back on screen
+      let score = (moved > 1 ? 5 + moved / 100 : 0) + (natural - s.h) / 200;  // small cost for having to scroll inside
+      for (const { c, b } of cards) {
+        if (box.left < b.right && box.left + w > b.left && box.top < b.bottom && box.top + box.h > b.top) score += c === cur.anchor ? 1000 : row.some((x) => x.c === c) ? 100 : 3;
+      }
+      if (!best || score < best.score) best = { ...box, score };
+    }
+    pv.style.maxHeight = `${Math.round(best.h)}px`;
+    pv.style.left = `${Math.round(best.left)}px`; pv.style.top = `${Math.round(best.top)}px`;
   }
 
   function show(id, anchor, pin = false) {
