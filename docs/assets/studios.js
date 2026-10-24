@@ -105,7 +105,7 @@ const CORE_STUDIOS = [
     placeholder: "A family-owned mobile dog-grooming business in Tampa, friendly and upscale…",
     examples: ["Boutique bookkeeping firm for creative freelancers", "Farm-to-table food truck in Austin", "Veteran-owned HVAC company, trustworthy and local", "Yoga studio for busy professionals"],
     icon: '<path d="M12 3 4 7v5c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V7Z"/><path d="m9 12 2 2 4-4"/>',
-    hue: 300, sat: 0.8,
+    hue: 300, sat: 0.7, tone: 0.9,
     art: '<g transform="translate(.8 .8) scale(.95)"><path class="d" d="M16 3.5C8.8 3.5 3 8.9 3 15.6S8.6 28 15.4 28c1.9 0 2.9-1.2 2.9-2.6 0-1.9-1.8-2.5-1.8-4.2 0-1.4 1.1-2.4 2.7-2.4h3.6c3.9 0 6.2-2.6 6.2-5.6C29 7.7 23.4 3.5 16 3.5Z"/><path class="l" d="M16 3.5C8.8 3.5 3 8.9 3 15.6S8.6 28 15.4 28c1.9 0 2.9-1.2 2.9-2.6 0-1.9-1.8-2.5-1.8-4.2 0-1.4 1.1-2.4 2.7-2.4h3.6c3.9 0 6.2-2.6 6.2-5.6C29 7.7 23.4 3.5 16 3.5Z"/><circle class="k" cx="9.3" cy="14.2" r="2.3"/><circle class="w" cx="12.6" cy="8.9" r="2.3"/><circle class="k o" cx="18.8" cy="8.2" r="2.3"/><circle class="w o" cx="23.6" cy="12" r="2.3"/></g>'
   }
 ];
