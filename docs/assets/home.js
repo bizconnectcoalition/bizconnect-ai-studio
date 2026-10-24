@@ -15,6 +15,7 @@
     const simple = BCAI.mode() === "simple";
     grid.classList.toggle("simple", simple);
     grid.style.setProperty("--simple-cols", Math.min(list.length, 4));
+    const total = STUDIOS.length;
     // Card = a plain container; its title is the real button, stretched over the whole card (CSS ::after),
     // so the separate "Example" button never sits inside another button.
     BCAI_PREVIEW.hide();
