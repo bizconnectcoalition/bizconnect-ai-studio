@@ -144,6 +144,7 @@
   BCAI.whenSignedIn(async () => {
     await BCAI.loadCatalog();
     ctl = BCAI_CONTROLS.build(id, "full", $("#controls"), update);
+    document.addEventListener("bcai:mode", () => ctl.rerender()); // Simple = model dropdown, All tools = engine cards
     $("#go").textContent = isChat ? "Send" : "Create";
     update();
     await loadHistory();

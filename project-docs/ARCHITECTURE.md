@@ -28,6 +28,7 @@ Every studio opens in **Simple mode**: the home page shows only the brand's star
 - Visitors who never touched the switch see the brand's default (Simple), including people who used the studio before the switch existed. If storage is blocked (private browsing), the switch still works for the current page.
 - The code is `mode()`, `setMode()`, `visibleStudios()` and `modeToggle()` in `app.js`; it fires a `bcai:mode` event that `home.js` and `studio-page.js` redraw on.
 - If a brand hides studios until only its starter tools remain, the switch disappears.
+- Inside a studio, Simple mode replaces the AI-engine cards with one **"AI model (optional)" dropdown**. It is pre-set to the recommended low-cost model (`DEFAULT_ENGINE` in `controls.js`), and each option reads like "Quick · Gemini Flash · about 2 credits / reply" (Quick / Better / Best = the engine's fast / balanced / premium tier). All-tools mode shows the full engine cards.
 
 ## The Worker and brands
 - Every POST body carries `brand: "<id>"` (added automatically by `api()` in `app.js`).

@@ -18,7 +18,16 @@
     const eng = () => BCAI.engineFor(studioId, st.engine);
     const full = mode === "full";
 
+    // Simple mode: one plain dropdown (pre-set to a good low-cost model). All-tools mode: the full engine cards.
+    const TIER_WORD = { fast: "Quick", balanced: "Better", premium: "Best" };
+    const plainCost = (s) => String(s).replace(/\bcr\b/g, "credits").replace(/^~/, "about ");
     function engineList() {
+      if (BCAI.mode() === "simple" && engines.length > 1) {
+        const def = DEFAULT_ENGINE[studioId];
+        return `<div class="field engine-pick"><label for="eng-sel">AI model <span class="opt">(optional)</span></label>
+          <select class="input" id="eng-sel" data-engine-select>${engines.map((e) => `<option value="${esc(e.id)}" ${e.id === st.engine ? "selected" : ""}>${esc(`${TIER_WORD[e.tier] || e.tier} · ${e.label} · ${plainCost(BCAI.unitLabel(studioId, e))}`)}${e.id === def ? " (recommended)" : ""}</option>`).join("")}</select>
+          <small class="muted">${st.engine === def ? "We picked a good, low-cost model for you. Change it only if you want to." : `${esc(eng().maker)} · ${esc(eng().desc)}`}</small></div>`;
+      }
       return `<div class="field"><span class="label">AI engine</span><div class="engines">${engines.map((e) => `
         <button type="button" class="engine ${e.id === st.engine ? "on" : ""}" data-engine="${e.id}">
           <span class="dot"></span>
@@ -95,6 +104,7 @@
 
     function wire() {
       host.querySelectorAll("[data-engine]").forEach((b) => (b.onclick = () => { st.engine = b.dataset.engine; render(); }));
+      host.querySelectorAll("[data-engine-select]").forEach((s) => (s.onchange = () => { st.engine = s.value; render(); host.querySelector("[data-engine-select]")?.focus(); }));
       host.querySelectorAll("[data-seg]").forEach((g) => g.querySelectorAll("button").forEach((b) => (b.onclick = () => {
         const k = g.dataset.seg, v = b.dataset.v;
         st[k] = k === "count" || k === "duration" || k === "slides" ? Number(v) : k === "audio" ? v === "true" : k === "speed" ? Number(v) : v;
