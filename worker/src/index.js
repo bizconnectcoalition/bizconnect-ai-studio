@@ -62,7 +62,7 @@ const QUEUED = new Set(["video", "avatar", "music"]);
 // presenter = default Talking Avatar photo in ./public (null = members must upload their own photo).
 const BRANDS = {
   bizconnect: { product: "BizConnect AI Studio", about: "part of Biz Connect Coalition, a business-networking community", audience: "small-business owners and networkers", guide: "Allie", presenter: "allie-presenter.jpg" },
-  rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Bloom", presenter: null },
+  rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Bloom", presenter: "bloom-presenter.jpg" },
 };
 const brandOf = (b) => {
   const id = typeof b?.brand === "string" && Object.hasOwn(BRANDS, b.brand) ? b.brand : "bizconnect";

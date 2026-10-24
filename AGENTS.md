@@ -2,6 +2,8 @@
 
 Orientation for any AI agent or developer opening this folder. Read this file and the four short files in `project-docs/` before changing anything.
 
+> **The BizConnect studio is the TEMPLATE for every new business studio.** It's the starting point (Simple/All-tools mode, the plain AI-model dropdown, hover examples, the full-size guide character, the default Talking Avatar presenter). A new studio starts as an exact copy plus its own brand, and may then be customised and drift from it: see *Starting point, not a cage* in `project-docs/WHITE_LABEL.md`.
+>
 > **This repo is two things:** the shared AI Studio **core** (used by every business's studio) **and** BizConnect's own branded studio. Client studios live next door in `..\ai-studio-clients\`.
 
 ## What this is, in one paragraph
@@ -40,6 +42,7 @@ R:\Documents\Claude\Projects\Bizconnect\
 | Change a client's wording or colors | Only in that client's folder: `docs\brands\<id>\` → commit + push the client repo (no sync needed) |
 | Change which tools Simple mode shows | `simpleStudios` in that brand's `brand.js` (default chat, image, video); `defaultMode: "advanced"` to start with all tools |
 | Change the hover examples on the cards | Core: `docs/assets/previews.js` + `docs/assets/previews/`. One brand: `previews` in its `brand.js` |
+| Let one business keep its own version of a core file | List the path in `..\ai-studio-clients\<client>\CLIENT_OWNED.txt`; sync then leaves it alone (see WHITE_LABEL.md) |
 | Make a studio for a new business | Follow `project-docs/WHITE_LABEL.md` step by step |
 | Change AI engines or prices | `ENGINES` in `worker/src/index.js`, then `npx wrangler deploy` from `worker/` (separate from pushing the site; it affects **every** studio at once) |
 | Give a brand its own concierge voice | Add it to `BRANDS` in `worker/src/index.js`, then deploy the Worker (required for every new client) |

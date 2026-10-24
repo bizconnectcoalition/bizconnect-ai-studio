@@ -103,6 +103,29 @@ Rewrite `AGENTS.md` and `README.md` for the new business (keep `CLAUDE.md` as is
    ```
 3. On GitHub: Settings → Pages → Source *Deploy from a branch*, Branch `main`, folder `/docs`. The site appears at `https://<owner>.github.io/<id>-ai-studio/` in 1–2 minutes (hard-refresh with Ctrl+Shift+R).
 
+## What a new studio gets from the template (match all of these before launch)
+| Feature | Where it's set for a brand |
+|---|---|
+| Simple mode (3 starter tools) + "See all tools" | `simpleStudios`, `defaultMode` |
+| Plain "AI model (optional)" dropdown in Simple mode | automatic |
+| Hover / ▶ Example previews for every tool, in the business's own world | `previews` + `docs\brands\<id>\previews\` |
+| Full-size animated guide (6 poses, speech bubbles, concierge chat) | `guide.poses`, `guide.pages`, `guide.avatar`; art made like Bloom in `PREVIEW_MEDIA.md` |
+| Default Talking Avatar presenter | `presenter` + the same photo in `worker\public\` + `presenter` in the Worker's `BRANDS` entry |
+| Concierge voice | the Worker's `BRANDS` entry |
+| Preview safeguards until the business approves | `noindex`, `footer`, `gate.note` |
+
+## Starting point, not a cage
+The template is where every studio starts, not a rule that they must stay identical. A business can go further:
+1. **Brand-level changes** (words, colors, examples, guide, which tools show) always go in `docs\brands\<id>\`. These never conflict with the core.
+2. **Changing a core file for one business only** (e.g. a different layout in `assets\app.css` or `index.html`): edit it in the client, then list it in `<client>\CLIENT_OWNED.txt` (one path per line, relative to `docs\`, `#` comments allowed):
+   ```
+   assets/app.css      # salon layout tweaks (2026-11)
+   ```
+   From then on `sync-client.ps1` never overwrites, deletes or hash-checks that file. The client keeps its version and still receives every other core improvement. `-Check` lists each client's customised files. To hand a file back to the core, delete its line and sync with `-Force`.
+3. **An improvement every studio should get**: make it in the core, test BizConnect, then sync each client.
+
+Keep owned files few. Each one stops receiving core fixes, so note *why* in the comment, and look at the core's version before taking it over.
+
 ## Keeping clients up to date
 After any core change, run `sync-client.ps1 -Check`, sync each client marked STALE (step 3), look at it (step 5), then commit and push each client repo.
 ```powershell

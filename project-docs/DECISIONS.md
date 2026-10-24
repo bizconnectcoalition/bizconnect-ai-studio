@@ -2,6 +2,9 @@
 
 Newest first. Status: DECIDED / OPEN.
 
+## D-009 · 2026-10-24 · The BizConnect studio is the template; clients may drift (DECIDED)
+Dan: "use this as the template base, so when we build new ones, this is a starting point. But I might customize new ones further so they don't always have to be exactly in sync." So the core is still synced into clients, and a client can take over individual core files with `CLIENT_OWNED.txt`, which the sync then skips. Root & Bloom was brought up to the full template on the same day: Bloom became a full-size 6-pose stylist character (matching Allie's style) and the default Talking Avatar presenter.
+
 ## D-008 · 2026-10-23 · Simple mode by default (DECIDED)
 Dan: "a simple mode and then an advanced mode. The simple mode just has chat, images, video… then you can click a button for showing the rest." Built into the core so every brand gets it. Starter tools are per brand (`simpleStudios`), and the choice is remembered per browser. This BizConnect setup is now the template the other business studios follow.
 

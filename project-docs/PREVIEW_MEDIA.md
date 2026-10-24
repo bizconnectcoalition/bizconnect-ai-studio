@@ -34,6 +34,16 @@ Check spoken lines with faster-whisper (`base.en`) and confirm the music has no 
 | voice.mp3 | Slow pan over a bakery display case, nobody on screen; warm female off-screen voiceover: "Thanks for calling Maple and Main Bakery! We're busy baking right now. Leave your name and number, and we'll call you right back." |
 | music.mp3 | Gemini Create music: "Upbeat cozy acoustic guitar instrumental for a bakery commercial, happy and warm, no vocals." (track "The Baker's First Light", 0:04–0:34) |
 
+## Guide characters (full-size, 6 poses)
+Allie (BizConnect) predates this file. **Bloom (Root & Bloom, 2026-10-24)**: one Gemini chat, first prompt *"full-body 3D cartoon character illustration in a polished, semi-realistic animated-movie style … Bloom, a hairstylist: early thirties, shoulder-length wavy copper-auburn hair, light freckles, cream blouse, forest-green stylist apron, small gold sunflower pin, cream name tag 'Bloom', tan trousers, brown flats … SOLID FLAT MAGENTA (#FF00FF) background"*. Then, in the same chat: *"the SAME exact character Bloom … new pose: …"* for point, welcome (arms open), thumbs up, arms crossed, and brush + comb. **Use magenta, not green, when the character wears green.** Full-size downloads (2752×1536) were keyed with `key_bloom.py`-style processing:
+- alpha from `min(R,B) − G`
+- despill
+- 1 px erode + blur
+- crop
+- resize to 640 px tall PNG
+
+The presenter came from the same chat (*"waist-up portrait, facing the camera, mouth closed, plain deep forest-green background, vertical 4:5"*). It was cropped head-and-shoulders to 500×624 JPG (`img/presenter.jpg`, and the Worker's `public/bloom-presenter.jpg`), plus a 200×250 face crop for `img/guide-avatar.jpg`.
+
 ## Root & Bloom set (`ai-studio-clients\rootbloom-ai-studio\docs\brands\rootbloom\previews\`)
 | File | Gemini prompt (abridged) |
 |---|---|
