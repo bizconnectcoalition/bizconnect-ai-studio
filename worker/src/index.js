@@ -18,16 +18,17 @@ const LLM_URL = "https://fal.run/openrouter/router/openai/v1/chat/completions";
 const LLMS = {
   "gemini-flash": { label: "Gemini Flash", maker: "Google", tier: "fast", desc: "Fast, low-cost answers", model: "google/gemini-2.5-flash", inPerM: 0.30, outPerM: 2.50 },
   "gpt-mini": { label: "GPT-5 mini", maker: "OpenAI", tier: "balanced", desc: "Sharp, well-rounded writing", model: "openai/gpt-5-mini", inPerM: 0.25, outPerM: 2.00 },
-  "claude": { label: "Claude Sonnet", maker: "Anthropic", tier: "premium", desc: "Best for nuanced, polished writing", model: "anthropic/claude-sonnet-4.5", inPerM: 3.00, outPerM: 15.00 },
+  "claude": { label: "Claude Sonnet 4.5", maker: "Anthropic", tier: "premium", desc: "Best for nuanced, polished writing", model: "anthropic/claude-sonnet-4.5", inPerM: 3.00, outPerM: 15.00 },
+  "claude-5": { label: "Claude Sonnet 5.5", maker: "Anthropic", tier: "premium", desc: "Newest Claude: polished writing at a lower cost", model: "anthropic/claude-sonnet-5.5", inPerM: 2.00, outPerM: 10.00 },
 };
 const llmEngines = (ids) => ids.map((id) => ({ id, ...LLMS[id], unit: "tokens" }));
 
 const ENGINES = {
-  chat: llmEngines(["gemini-flash", "gpt-mini", "claude"]),
-  translate: llmEngines(["gemini-flash", "gpt-mini", "claude"]),
-  deck: llmEngines(["gemini-flash", "gpt-mini", "claude"]),
-  outreach: llmEngines(["gemini-flash", "gpt-mini", "claude"]),
-  brand: llmEngines(["gemini-flash", "claude"]).map((e) => ({ ...e, extraUsd: 0.025, desc: e.desc + " + a FLUX logo concept" })),
+  chat: llmEngines(["gemini-flash", "gpt-mini", "claude", "claude-5"]),
+  translate: llmEngines(["gemini-flash", "gpt-mini", "claude", "claude-5"]),
+  deck: llmEngines(["gemini-flash", "gpt-mini", "claude", "claude-5"]),
+  outreach: llmEngines(["gemini-flash", "gpt-mini", "claude", "claude-5"]),
+  brand: llmEngines(["gemini-flash", "claude", "claude-5"]).map((e) => ({ ...e, extraUsd: 0.025, desc: e.desc + " + a FLUX logo concept" })),
   image: [
     { id: "flux-schnell", label: "FLUX Schnell", maker: "Black Forest Labs", tier: "fast", desc: "Drafts in about 2 seconds", endpoint: "fal-ai/flux/schnell", unit: "image", usd: 0.003 },
     { id: "flux-dev", label: "FLUX Dev", maker: "Black Forest Labs", tier: "balanced", desc: "Detailed, photographic results", endpoint: "fal-ai/flux/dev", unit: "image", usd: 0.025 },
