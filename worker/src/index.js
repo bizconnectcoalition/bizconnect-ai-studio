@@ -191,7 +191,10 @@ async function llm(env, eng, messages, maxTokens = 1500, json = false) {
   if (!r.ok) throw new Error(falErr(out, r.status));
   const text = out?.choices?.[0]?.message?.content ?? out?.output ?? "";
   const u = out?.usage || {};
-  const usd = ((u.prompt_tokens || 0) * eng.inPerM + (u.completion_tokens || 0) * eng.outPerM) / 1e6;
+  // Bill what the router reports it charged; the price table is only the fallback (and the up-front estimate).
+  const tableUsd = ((u.prompt_tokens || 0) * eng.inPerM + (u.completion_tokens || 0) * eng.outPerM) / 1e6;
+  const reported = Number(u.cost);
+  const usd = Number.isFinite(reported) && reported > 0 ? reported : tableUsd;
   return { text: String(text), usd };
 }
 function parseJsonLoose(text) {
@@ -610,15 +613,26 @@ async function route(req, env, url, ctx) {
       return fail(502, e.message || "Something went wrong.", { credits: u.credits, refunded: credits });
     }
 
-    const actualCredits = Math.min(credits, toCredits(env, res.usd || estUsd));
+    let actualCredits = toCredits(env, res.usd || estUsd);
     const created = Date.now();
     if (res.queued) {
       const id = rid();
       await kvPut(env, `job:${id}`, { id, handle, studio, engine: eng.id, engineLabel: eng.label, prompt, credits, usd: estUsd, created, statusUrl: res.queued.q.status_url, responseUrl: res.queued.q.response_url, outType: res.queued.outType, meta: res.queued.meta || null }, { expirationTtl: 60 * 60 * 24 * 7 });
       return json({ jobId: id, credits: user.credits, charged: credits });
     }
+    // The daily spend counter settles to the real cost, whichever way the estimate was off.
+    await addSpend(env, (res.usd || estUsd) - estUsd);
     let balance = user.credits;
-    if (actualCredits < credits) balance = (await refund(credits - actualCredits, Math.max(0, estUsd - res.usd))).credits;
+    if (actualCredits < credits) balance = (await refund(credits - actualCredits, 0)).credits;
+    else if (actualCredits > credits) {
+      // Real cost came in above the estimate: take the extra, never below zero.
+      const u = await getUser(env, handle);
+      const extra = Math.min(actualCredits - credits, Math.max(0, u.credits));
+      u.credits -= extra;
+      await saveUser(env, u);
+      actualCredits = credits + extra;
+      balance = u.credits;
+    }
     const item = { id: rid(), studio, engine: eng.id, engineLabel: eng.label, prompt, options: o.messages ? undefined : o, output: res.output, credits: actualCredits, created };
     if (studio !== "chat") await addHistory(env, handle, item);
     const u2 = await getUser(env, handle);
