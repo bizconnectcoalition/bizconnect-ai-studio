@@ -68,7 +68,7 @@ const QUEUED = new Set(["video", "avatar", "music"]);
 // outreach and brand-kit prompts (e.g. a regulated trade). Both optional; brands without them are unchanged.
 const BRANDS = {
   bizconnect: { product: "BizConnect AI Studio", about: "part of Biz Connect Coalition, a business-networking community", audience: "small-business owners and networkers", guide: "Allie", presenter: "allie-presenter.jpg" },
-  rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Bloom", presenter: "bloom-presenter.jpg" },
+  rootbloom: { product: "Root & Bloom AI Studio", about: "from Root & Bloom Salon Source, a collective that supports independent hairstylists and salon owners with organic products, education and community", audience: "hairstylists, salon owners and beauty professionals", guide: "Amber", presenter: "bloom-presenter.jpg", cast: { Amber: "Root & Bloom's founder" }, contact: "the contact form at rootbloomsalonsource.com/connect" },
   metropa: {
     product: "Metro AI Studio", about: "the in-house studio of Metro Public Adjustment, Inc., a veteran-owned public adjusting firm in Bensalem, Pennsylvania that has represented property owners on insurance claims since 1994", audience: "Metro's public adjusters, claims representatives, sales and office team", guide: "Steve", presenter: "morgan-presenter.jpg",
     cast: { Steve: "Steve McCaffrey, Metro's founder and President" }, contact: "their manager or the Metro office (metropa.com/contact)",
