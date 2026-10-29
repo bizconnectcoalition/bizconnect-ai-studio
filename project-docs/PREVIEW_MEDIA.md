@@ -53,6 +53,15 @@ For `guide.cast` (WHITE_LABEL.md step 2b). One Gemini chat (genxaijourney), 4 at
 - Lesson: an early try that only described her came out as a generic young blonde (a critic scored the likeness 4/10). Describe what makes the person *them*: age, face shape, smile, frames, and what their hair colour is *not*.
 - Chrome blocks repeat automatic downloads, so reload the chat between clicks on *Download full size*. Raw downloads and source photos stay in `ai-studio-clients\_private_refs\` (never in a repo).
 
+### A real person as the MAIN guide (AI Steve, Metro Public Adjustment's founder, 2026-10-29)
+Same recipe as Amber, but he is the only guide (no fictional character to take turns with).
+- **References:** his LinkedIn headshot + a face crop, and Bloom's wave pose on magenta for style. The first pass got the hairline and outfit but gave him big round eyes and a generic grin.
+- **The fix that made it him** (a fresh chat with 3 candid photos the client sent + the first cartoon): describe the *smile* concretely: *"very wide, stretched grin with thin lips pulled back, a full row of teeth (more lower than upper), corners pulled out wide and slightly lopsided, cheeks bunched up; eyes squint into narrow crescents with deep crow's feet (NOT big round wide-open eyes); thick dark brows sloping down at the outer ends."*
+- A follow-up asking only for "taller body proportions" lost the squint again. Instead the good render became the master: a NEW chat with that image as image 1 (+ 2 smile photos), and every pose prompt repeats the face list (*"keep the face EXACTLY: squinting crescent eyes…"*). All 6 poses then matched.
+- Name tag reads **"AI Steve"** (disclosure on every pose). 6th pose = clipboard + pen (a moisture meter renders as a garbled gadget).
+- He is **not** the Talking Avatar presenter: a separate prompt made a fictional teammate, Morgan (*"fictional friendly woman in her late thirties, property claims advocate … deep forest-green polo, plain gold pin, head-and-shoulders, #003928 background, 4:5, not based on any real person"*).
+- Downloads: the Gemini **Download full size image** button worked repeatedly without reloading (2026-10-29); clicking it via `document.querySelectorAll('button[aria-label="Download full size image"]')` (last one) is reliable. Gemini's upload picker can be fed by intercepting `HTMLInputElement.prototype.click` for `type=file` inputs and then using the extension's `file_upload`.
+
 ## Root & Bloom set (`ai-studio-clients\rootbloom-ai-studio\docs\brands\rootbloom\previews\`)
 | File | Gemini prompt (abridged) |
 |---|---|
