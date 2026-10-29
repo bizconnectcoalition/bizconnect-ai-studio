@@ -49,6 +49,15 @@ Check nothing was missed (no output = good):
 Select-String -Path "$client\docs\brands\$id\brand.js" -Pattern 'TODO','acme','Acme' -CaseSensitive
 ```
 
+### 2b. Optional: a guide that looks like the owner (and staff)
+Dan's default for a client: the guide is a cartoon of the owner, in the house-guide style. Root & Bloom (founder Amber, 2026-10-29) is the worked example: Amber is simply the brand's `guide`. Only when real staff likenesses are added do guides take turns via `guide.cast` (a reload or new visit shows the next person, moving between pages keeps the same one); never rotate a real person with a fictional character.
+1. **Consent first.** Get each person's written OK (an email is fine) covering: cartoon likeness, their first name, used as an AI chat guide, preview and live site. Keep it, and their source photos, in `$family\ai-studio-clients\_private_refs\<id>-people\` (outside every repo, never committed); note the date and scope in `PRIVATE_NOTES.md`. If they withdraw: delete their `cast` entry in `brand.js` and in the Worker's `BRANDS`, publish both, delete their images (they stay in the public repo's history, so say so when asking).
+2. **Make the art in Gemini**, one chat per person (a Pro account, see the browser skill). Attach 2–3 clear photos of the person **plus one pose of the brand's existing guide on its keying background** as the style reference. First prompt: the person's likeness described concretely (age, face shape, smile, glasses, hair color *and* what it is not, build), "Flattering, kind portrayal", "body proportions IDENTICAL to <guide>", the same uniform as the guide with a name tag, the wave pose, "pure bright flat magenta #FF00FF background, no gradient, no floor shadow" (green instead only if they wear magenta). Iterate on the wave until it looks like them, then in the same chat ask for the guide's other 5 poses ("the SAME exact character … in a new pose: …"; keep the welcome arms compact, swap the 6th pose's prop for the trade) and a head-and-shoulders portrait on the brand's dark color. Full prompts: `PREVIEW_MEDIA.md`.
+3. **Download**: Chrome allows one automatic download per page; reload the chat between downloads.
+4. **Key and name**: `python "$core\tools\key_magenta.py" in.jpg out.png` (640 px tall, transparent). Files: `img\guide\<name>-pose-<wave|point|welcome|thumbsup|armscrossed|<prop>>.png` in the same order as the guide's poses, and a 200×250 head-and-shoulders crop `img\<name>-avatar.jpg`.
+5. **Wire it**: owner only: make them the `guide` in `brand.js`. Several real people: the owner as `guide`, plus `guide.cast` (`{ name: "<owner>" }` first, then one full entry per person; an entry inherits every field it leaves out from the base guide, so give each person their own `role`, `label`, `avatar`, `poses`, `pages` and `greeting`). Say "AI" in each real person's `role` and greeting, and keep their lines advice-only: no prices, earnings or promises in a real person's voice. In the brand's Worker entry (step 4) set `guide` to the owner's name and add `cast: { <Name>: "<who they are>", … }` for **every** real person (that's what adds the "you are an AI, not the real person" rules) plus a `contact`; names must match exactly.
+6. **Check** (step 5): reload twice to see each face, and ask each one in the chat "who are you?" and "are you the real <Name>?".
+
 ## 3. Copy in the core
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$core\tools\sync-client.ps1" -Client $client -BrandId $id
@@ -61,6 +70,7 @@ Without this the studio still works, but its concierge introduces itself as BizC
    ```js
    acme: { product: "Acme AI Studio", about: "from Acme, a …", audience: "…", guide: "<guide name>", presenter: null },
    ```
+   With a guide cast (step 2b), also add `cast: { Jane: "Acme's owner" }, contact: "the contact page at acme.com/contact"`.
 2. Check and deploy (first time on a PC: `npx wrangler login`):
    ```powershell
    node --check "$core\worker\src\index.js"
@@ -110,6 +120,7 @@ Rewrite `AGENTS.md` and `README.md` for the new business (keep `CLAUDE.md` as is
 | Plain "AI model (optional)" dropdown in Simple mode | automatic |
 | Hover / ▶ Example previews for every tool, in the business's own world | `previews` + `docs\brands\<id>\previews\` |
 | Full-size animated guide (6 poses, speech bubbles, concierge chat) | `guide.poses`, `guide.pages`, `guide.avatar`; art made like Bloom in `PREVIEW_MEDIA.md` |
+| Optional: the guide as a cartoon of the owner (+ staff taking turns) | `guide` / `guide.cast` + the Worker's `cast`; step 2b |
 | Default Talking Avatar presenter | `presenter` + the same photo in `worker\public\` + `presenter` in the Worker's `BRANDS` entry |
 | Concierge voice | the Worker's `BRANDS` entry |
 | Preview safeguards until the business approves | `noindex`, `footer`, `gate.note` |

@@ -49,6 +49,16 @@ window.BRAND = {
     },
     greeting: "Hi{first}! I'm Max. Tell me what you'd like to make and I'll point you to the right studio.", // {first} = " Jane"
     chips: ["Make a flyer", "Write a follow-up email", "Create a short promo video", "Build a brand kit"],
+    // Optional: several faces that take turns, one per full page load (e.g. cartoons of the owner and staff,
+    // made in the same style as the main guide). A reload or new visit shows the next one; moving between pages keeps
+    // the same one. Each entry overrides the fields above; { name: "Max" } = Max as written. A field an entry LEAVES OUT
+    // is inherited from Max, so give every real person their own avatar, poses (or poses: []), pages and greeting.
+    // Every extra name must also be in the Worker's BRANDS.<id>.cast (that's how the concierge knows who it is).
+    // Real people: written consent first, and say "AI" in their role/greeting. Recipe: project-docs/WHITE_LABEL.md.
+    // cast: [
+    //   { name: "Max" },
+    //   { name: "Jane", role: "Acme's owner · AI guide", avatar: "img/jane-avatar.jpg", poses: [ … ], pages: { … }, greeting: "Hi{first}! I'm Jane…" },
+    // ],
   },
 
   // Default face for the Talking Avatar studio ({ name, thumb } with the photo also placed in worker/public/),

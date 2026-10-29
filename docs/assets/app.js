@@ -651,8 +651,29 @@
   // ---------------- the guide: floating helper + concierge chat (BRAND.guide) ----------------
   // With poses: a full-size figure that bobs and cross-fades poses.
   // Without poses: a compact round avatar button with the same bubble and chat.
+  // With guide.cast (2+ entries): a reload or a new visit shows the next person in the cast; moving
+  // between pages keeps the same person. An entry's fields override the base guide, so { name: "Bloom" }
+  // alone means "the base guide as written" (and an entry that leaves out pages/greeting/poses inherits them).
+  function pickGuide(base) {
+    const cast = base?.cast;
+    if (!Array.isArray(cast) || cast.length < 2) return base;
+    const key = `bcai_guide_${B.id || "brand"}`, n = cast.length;
+    const mod = (v) => ((v % n) + n) % n;
+    let ix = NaN;
+    try { ix = parseInt(sessionStorage.getItem(key), 10); } catch {}
+    const reload = performance.getEntriesByType?.("navigation")[0]?.type === "reload";
+    if (!Number.isInteger(ix) || reload) {
+      const last = parseInt(store.get(key), 10);
+      ix = Number.isInteger(last) ? last + 1 : Math.floor(Math.random() * n);
+    }
+    ix = mod(ix);
+    store.set(key, String(ix));
+    try { sessionStorage.setItem(key, String(ix)); } catch {}
+    const { cast: _, ...rest } = base;
+    return { ...rest, ...cast[ix] };
+  }
   function guide() {
-    const G = B.guide;
+    const G = pickGuide(B.guide);
     if (!G) return;
     const name = G.name || "Guide";
     const poses = (G.poses || []).map((p) => ({ src: asset(p.src), alt: p.alt || name }));
@@ -685,7 +706,7 @@
     tab.className = "guide-tab";
     tab.type = "button";
     tab.innerHTML = `${G.avatar ? `<img src="${esc(asset(G.avatar))}" alt=""> ` : ""}Ask ${esc(name)}`;
-    tab.setAttribute("aria-label", `Show ${name}, your studio guide`);
+    tab.setAttribute("aria-label", `Ask ${name}, ${G.label || "your studio guide"}`);
     document.body.appendChild(root);
     document.body.appendChild(tab);
 
@@ -764,7 +785,7 @@
       const typing = document.createElement("div"); typing.className = "ac-msg bot typing"; typing.innerHTML = "<span></span><span></span><span></span>";
       msgsEl.appendChild(typing); msgsEl.scrollTop = msgsEl.scrollHeight;
       try {
-        const d = await api("/api/concierge", { messages: msgs });
+        const d = await api("/api/concierge", { messages: msgs, guide: name });
         typing.remove(); msgs.push({ role: "assistant", content: d.reply }); addMsg("assistant", d.reply);
       } catch (e) { typing.remove(); addMsg("assistant", e.message); }
     }
