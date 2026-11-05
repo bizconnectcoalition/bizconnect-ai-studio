@@ -62,6 +62,15 @@ Same recipe as Amber, but he is the only guide (no fictional character to take t
 - He is **not** the Talking Avatar presenter: a separate prompt made a fictional teammate, Morgan (*"fictional friendly woman in her late thirties, property claims advocate … deep forest-green polo, plain gold pin, head-and-shoulders, #003928 background, 4:5, not based on any real person"*).
 - Downloads: the Gemini **Download full size image** button worked repeatedly without reloading (2026-10-29); clicking it via `document.querySelectorAll('button[aria-label="Download full size image"]')` (last one) is reliable. Gemini's upload picker can be fed by intercepting `HTMLInputElement.prototype.click` for `type=file` inputs and then using the extension's `file_upload`.
 
+### Bob (Hillis Public Adjusters' founder, 2026-11-04) — first try, one chat
+- **Account:** pshcorporations@gmail.com (Pro, user-confirmed avatar-absent), model **3.1 Pro**. Gemini asks once per account to Agree to its "Creating content from images and files" notice (accepting it needs Dan's OK).
+- **References (5):** Bob's current website headshot (silver hair) + 3 older photos Don sent (dark hair), each cropped so only Bob shows, + AI Steve's wave pose flattened on magenta as the style reference ("a DIFFERENT person, ONLY the style reference").
+- **What made it work first time:** a concrete face list (broad rounded face, full cheeks, big smile with a full row of upper teeth, eyes narrowed by the smile with crow's feet, tanned skin) plus an explicit hair instruction for the mixed look Dan asked for: *"salt-and-pepper, a MIX of images 1 and 2: dark brown with lots of silver-grey running through it and silver at the temples and front, NOT fully white, NOT fully dark brown."* Outfit = charcoal suit, white shirt, brand-red tie (#D73F2F), gold lapel pin, cream name tag "Bob".
+- Poses in the same chat with *"the SAME exact character Bob as the last image (same face, …) in a new pose: …"*: point, welcome (compact arms), thumbs up, arms crossed, clipboard + pen; then a head-and-shoulders portrait on #111A22 for `bob-avatar.jpg`. All six matched.
+- **Downloads blocked:** after the first *Download full size image*, Chrome in that profile silently blocked the rest (reloading did not help; in-page fetch/POST to localhost is blocked by CSP). Workaround that kept quality: draw the chat's 459×1024 preview full-screen in a magenta overlay at `height:200vh`, screenshot the top and bottom halves, stitch (1568×1488), then `key_magenta.py` to 640 px tall. Overlay code: `replaceChildren()` (Gemini's Trusted Types forbids `innerHTML`).
+- **Watch out:** R:\Download is shared with other sessions; never pick "the newest Gemini_Generated_Image" blindly. Check its time against your click.
+- Presenter **Jordan** (fictional, photoreal, steel-blue quarter-zip, #1C2A36) and the hover image/logo (made-up "Ridgeline Claims Advocates") each came from a fresh chat on the same account.
+
 ## Root & Bloom set (`ai-studio-clients\rootbloom-ai-studio\docs\brands\rootbloom\previews\`)
 | File | Gemini prompt (abridged) |
 |---|---|

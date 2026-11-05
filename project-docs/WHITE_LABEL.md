@@ -71,6 +71,7 @@ Without this the studio still works, but its concierge introduces itself as BizC
    acme: { product: "Acme AI Studio", about: "from Acme, a …", audience: "…", guide: "<guide name>", presenter: null },
    ```
    With a guide cast (step 2b), also add `cast: { Jane: "Acme's owner" }, contact: "the contact page at acme.com/contact"`.
+   Optional `facts: "…"`: a fact sheet taken **only** from the business's own public website (under ~4,000 characters, end it with "Source: <site>, read <date>"). The concierge then also answers questions about the business from those facts alone, says "I don't know" for anything else, and may share the public office phone/email listed there. Hillis (client #3) is the worked example: scrape the site's main pages, distill, and keep a per-fact audit (source page + snippet) in `_private_refs\<id>\`. Leave out testimonials, outcome numbers and staff personal details.
 2. Check and deploy (first time on a PC: `npx wrangler login`):
    ```powershell
    node --check "$core\worker\src\index.js"
