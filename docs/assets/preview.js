@@ -41,12 +41,12 @@
     pv.addEventListener("focusout", (e) => { if (pinned && e.relatedTarget && !pv.contains(e.relatedTarget)) hide(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && cur) hide(true); });
     document.addEventListener("pointerdown", (e) => { if (cur && pinned && !pv.contains(e.target) && !e.target.closest?.(".ex-btn")) hide(); });
-    window.addEventListener("scroll", () => { if (!cur) return; if (!pinned && offscreen()) hide(); else place(); }, { passive: true });
+    // a hover example closes when the page scrolls (no jumping around); a clicked (pinned) one follows its card
+    window.addEventListener("scroll", () => { if (!cur) return; if (!pinned) hide(); else place(); }, { passive: true });
     window.addEventListener("resize", () => cur && place());
     if (window.ResizeObserver) new ResizeObserver(() => cur && place()).observe(pv); // images load → taller → re-fit on screen
     return pv;
   }
-  const offscreen = () => { const r = cur.anchor.getBoundingClientRect(); return r.bottom < 0 || r.top > window.innerHeight; };
 
   // ----- what each kind of tool shows -----
   function body(id, d) {
@@ -89,6 +89,7 @@
     // media loads only when a preview opens (keeps the page fast)
     pv.querySelectorAll("[data-src]").forEach((m) => {
       m.addEventListener("error", () => { if (cur) m.closest(".pv-media, .pv-audio, .pv-kit")?.classList.add("pv-missing"); }, { once: true });
+      m.addEventListener(m.tagName === "IMG" ? "load" : "loadedmetadata", () => cur && place(), { once: true }); // re-measure once media has a size
       m.src = m.dataset.src;
     });
     const v = pv.querySelector("video"), pause = pv.querySelector(".pv-pause");
@@ -117,39 +118,75 @@
     pv.classList.toggle("sheet", small);
     back.hidden = !small;
     document.body.classList.toggle("pv-lock", small);
-    if (small) { pv.style.left = pv.style.top = ""; return; }
-    // Place it ABOVE or BELOW the card's row (kitty-corner to the card) so the cards beside it stay
-    // free to hover. Try each spot and keep the one that covers the fewest cards: covering the card
-    // itself or a card in the same row is the worst; covering a card in another row is mildly bad.
-    // If the space above/below is shorter than the popup, the popup shrinks to fit and scrolls inside.
-    pv.style.maxHeight = "";
-    const r = cur.anchor.getBoundingClientRect(), w = pv.offsetWidth, natural = pv.scrollHeight + 2, gap = 10, vw = window.innerWidth, vh = window.innerHeight;
-    const MIN_H = 160; // shorter than this is too cramped: use another spot (it scrolls inside)
-    const cards = [...(cur.anchor.parentElement?.querySelectorAll(".card") || [])].map((c) => ({ c, b: c.getBoundingClientRect() }));
-    const row = cards.filter(({ b }) => Math.abs(b.top - r.top) < 8);
-    const rowTop = Math.min(r.top, ...row.map(({ b }) => b.top)), rowBottom = Math.max(r.bottom, ...row.map(({ b }) => b.bottom));
-    const clampX = (x) => Math.min(Math.max(8, x), vw - w - 8);
-    const nearX = clampX(r.left + r.width / 2 - w / 2);                 // lined up with the card
-    const fullH = Math.min(natural, vh - 16);
-    const aboveH = Math.min(natural, rowTop - gap - 8), belowH = Math.min(natural, vh - 8 - rowBottom - gap);
-    const spots = [
-      aboveH >= MIN_H && { left: nearX, top: rowTop - gap - aboveH, h: aboveH },   // above the row
-      belowH >= MIN_H && { left: nearX, top: rowBottom + gap, h: belowH },         // below the row
-      { left: r.right + gap, top: r.top, h: fullH },                               // beside (last resort: covers a neighbour)
-      { left: r.left - w - gap, top: r.top, h: fullH },
-    ].filter(Boolean);
-    let best = null;
-    for (const s of spots) {
-      const box = { left: clampX(s.left), top: Math.min(Math.max(8, s.top), vh - s.h - 8), h: s.h };
-      const moved = Math.abs(box.left - s.left) + Math.abs(box.top - s.top); // had to be pushed back on screen
-      let score = (moved > 1 ? 5 + moved / 100 : 0) + (natural - s.h) / 200;  // small cost for having to scroll inside
-      for (const { c, b } of cards) {
-        if (box.left < b.right && box.left + w > b.left && box.top < b.bottom && box.top + box.h > b.top) score += c === cur.anchor ? 1000 : row.some((x) => x.c === c) ? 100 : 3;
-      }
-      if (!best || score < best.score) best = { ...box, score };
+    const MIN = 0.75;                                   // never shrink text below 75% (still readable)
+    const step = (k) => Math.floor(k * 20) / 20;        // whole 5% steps keep text crisp
+    const h0 = pv.scrollHeight + 2, w0 = pv.offsetWidth; // layout size: unaffected by the --pvs transform
+    const vw = window.innerWidth, vh = window.innerHeight, M = 8, gap = 12;
+    const apply = (k, maxH) => { pv.style.setProperty("--pvs", String(k)); pv.style.maxHeight = maxH ? `${Math.floor(maxH)}px` : "none"; };
+    if (small) {
+      // bottom panel (phones, touch): shrink to fit the window; only a very short window falls back to scrolling inside
+      pv.style.left = pv.style.top = "";
+      const k = Math.min(1, step((vh - 16) / h0));
+      if (k >= MIN) apply(k); else apply(MIN, (vh - 16) / MIN);
+      return;
     }
-    pv.style.maxHeight = `${Math.round(best.h)}px`;
-    pv.style.left = `${Math.round(best.left)}px`; pv.style.top = `${Math.round(best.top)}px`;
+    // Desktop: the example FLOATS kitty-corner to the card: up and toward its neighbour in the row (right; left for
+    // the last card in a row), reaching about halfway across the neighbour. Its bottom edge sits near the top of the
+    // card, so the card's title and its "See an example" button stay visible. It never scrolls inside: when there
+    // isn't room it is shrunk (CSS transform via --pvs, never below 75%), and otherwise it tries, in order:
+    // floating lower (but never over the card's button), floating below the button, sliding fully onto the neighbour.
+    const r = cur.anchor.getBoundingClientRect();
+    const kMax = Math.min(1, step((vw - 2 * M) / w0));
+    const row = [...(cur.anchor.parentElement?.querySelectorAll(".card") || [])]
+      .filter((c) => c !== cur.anchor).map((c) => c.getBoundingClientRect()).filter((b) => Math.abs(b.top - r.top) < 8);
+    const right = row.filter((b) => b.left >= r.right - 4).sort((a, b) => a.left - b.left)[0];
+    const left = row.filter((b) => b.right <= r.left + 4).sort((a, b) => b.right - a.right)[0];
+    const dir = right ? 1 : left ? -1 : (vw - r.right > r.left ? 1 : -1) * 0.5; // ±0.5 = alone in its row: lean toward the roomier side
+    const nb = dir === 1 ? right : dir === -1 ? left : null;
+    const diagX = (k) => {
+      const W = w0 * k;
+      if (dir === 1) return nb.left + nb.width * 0.5 - W;
+      if (dir === -1) return nb.right - nb.width * 0.5;
+      return dir > 0 ? r.right - W * 0.4 : r.left - W * 0.6;
+    };
+    const clampX = (x, k) => Math.min(Math.max(M, x), vw - w0 * k - M);
+    const btn = cur.anchor.querySelector(".ex-btn")?.getBoundingClientRect();
+    // keep the card's title words and its Example button visible
+    const h = cur.anchor.querySelector("h3");
+    let title = null;
+    if (h) { const rg = document.createRange(); rg.selectNodeContents(h); title = rg.getBoundingClientRect(); }
+    // (the last card in a row floats up-LEFT, over its own title; keeping that clear would cover the whole neighbour)
+    // Preference order: keep title + button clear; if that's impossible in the diagonal spot, keep only the button clear
+    // (covering the hovered card's own title beats covering the whole neighbour).
+    const keepBoth = [dir === -1 ? null : title, btn].filter((b) => b && b.width), keepBtn = [btn].filter((b) => b && b.width);
+    const clearOf = (keep) => (x, y, k) => {
+      const L = clampX(x, k), T = y, R = L + w0 * k, B = y + h0 * k;
+      return B <= vh - M + 0.5 && keep.every((b) => R <= b.left - 4 || L >= b.right + 4 || B <= b.top - 4 || T >= b.bottom + 4);
+    };
+    const target = r.top + r.height * 0.22;                     // ideal bottom edge: just into the card's top
+    const sizes = []; for (let k = kMax; k >= MIN - 1e-9; k = Math.round((k - 0.05) * 100) / 100) sizes.push(k);
+    let pick = null;
+    // 1) above, kitty-corner: the biggest size that floats there without covering the title or the button
+    // 2) card near the top of the window: float down-and-across, under the button
+    const y0 = Math.max(M, btn ? btn.bottom + 8 : r.bottom + gap);
+    for (const clear of [clearOf(keepBoth), clearOf(keepBtn)]) {
+      for (const k of sizes) { const y = Math.max(M, target - h0 * k), x = diagX(k); if (clear(x, y, k)) { pick = { k, y, x }; break; } }
+      if (!pick) for (const k of sizes) { const x = diagX(k); if (clear(x, y0, k)) { pick = { k, y: y0, x }; break; } }
+      if (pick) break;
+    }
+    // 3) beside the card, fully over the neighbour (only when neither diagonal fits)
+    if (!pick) {
+      const k = Math.max(MIN, Math.min(kMax, step((vh - 2 * M) / h0))), W = w0 * k, H = h0 * k;
+      const y = Math.min(Math.max(M, target - H), vh - H - M);
+      for (const x of dir > 0 ? [r.right + gap, r.left - gap - W] : [r.left - gap - W, r.right + gap]) {
+        const cx = clampX(x, k);
+        if (cx >= r.right + gap - 1 || cx + W <= r.left - gap + 1) { pick = { k, y, x, maxH: H > vh - 2 * M ? (vh - 2 * M) / k : 0 }; break; }
+      }
+    }
+    // 4) a very small window: smallest readable size at the top, scrolling inside only as a last resort
+    if (!pick) pick = { k: MIN, y: M, x: diagX(MIN), maxH: (vh - 2 * M) / MIN };
+    apply(pick.k, pick.maxH);
+    pv.style.left = `${Math.round(clampX(pick.x, pick.k))}px`; pv.style.top = `${Math.round(pick.y)}px`;
   }
 
   function show(id, anchor, pin = false) {

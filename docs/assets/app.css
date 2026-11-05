@@ -152,8 +152,8 @@ body.pv-open .guide,body.pv-open .guide-tab{opacity:0!important;pointer-events:n
 .ex-btn svg{width:11px;height:11px}
 .ex-btn:hover,.ex-btn:focus-visible{background:rgba(var(--accent-rgb),.22);border-color:var(--accent-hi);color:var(--accent-glow)}
 @media (pointer:coarse){.ex-btn{padding:9px 14px 9px 11px;font-size:12.5px}}
-.pv{position:fixed;z-index:85;width:380px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;background:linear-gradient(170deg,var(--bg-800),var(--bg-950));border:1px solid var(--accent);border-radius:16px;box-shadow:0 30px 70px -20px rgba(0,0,0,.75),0 0 0 4px rgba(var(--accent-rgb),.07);opacity:0;transform:translateY(6px) scale(.98);transition:opacity .2s ease,transform .2s ease}
-.pv.in{opacity:1;transform:none}
+.pv{position:fixed;z-index:85;width:380px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;background:linear-gradient(170deg,var(--bg-800),var(--bg-950));border:1px solid var(--accent);border-radius:16px;box-shadow:0 30px 70px -20px rgba(0,0,0,.75),0 0 0 4px rgba(var(--accent-rgb),.07);opacity:0;transform-origin:0 0;transform:translateY(6px) scale(calc(var(--pvs,1)*.98));transition:opacity .2s ease,transform .2s ease}
+.pv.in{opacity:1;transform:scale(var(--pvs,1))}
 .pv[hidden]{display:none}
 .pv-head{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid var(--line-soft);background:rgba(var(--accent-rgb),.07)}
 .pv-head b{font-family:var(--serif);font-weight:400;font-size:17px;color:var(--text)}
@@ -205,7 +205,7 @@ body.pv-open .guide,body.pv-open .guide-tab{opacity:0!important;pointer-events:n
 .pv-back[hidden]{display:none}
 body.pv-lock{overflow:hidden}
 @media (pointer:coarse){.pv-x{min-width:44px;min-height:44px}.pv-try{min-height:44px}.pv-pause{width:44px;height:44px}}
-.pv.sheet{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-width:none;max-height:82vh;border-radius:16px}
+.pv.sheet{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-width:none;max-height:82vh;border-radius:16px;transform-origin:50% 100%}
 @media (prefers-reduced-motion:reduce){.pv{transition:none}.pv-audio.on .pv-bars i{animation:none}}
 
 /* ---------- form fields ---------- */
