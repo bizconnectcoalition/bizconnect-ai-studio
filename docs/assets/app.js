@@ -45,9 +45,22 @@
   let user = null;
   try { user = JSON.parse(store.get(LS.user) || "null"); } catch {}
 
+  // Guest preview ("Just look around" on the sign-in box): no account, no token, nothing stored server-side.
+  // Guests can browse every page and example; anything that would create, chat or spend asks them to sign in.
+  // A brand turns it off with gate: { guest: false }. The flag lives for this browser tab only.
+  const GUEST_KEY = "bcai_guest";
+  const guestOn = () => !(B.gate && B.gate.guest === false);
+  const isGuest = () => { if (!guestOn() || store.get(LS.token)) return false; try { return sessionStorage.getItem(GUEST_KEY) === "1"; } catch { return false; } };
+  const PUBLIC_API = ["/api/catalog", "/api/login"];
+
   async function api(path, body) {
     const headers = { "Content-Type": "application/json" };
     const t = store.get(LS.token);
+    if (!t && !PUBLIC_API.includes(path.split("?")[0])) {
+      // not signed in: never send the request. A user action (POST) shows the sign-in box; background reads just fail quietly
+      if (body) gate();
+      const e = new Error("Please sign in to use this."); e.data = { signin: true }; e.status = 401; throw e;
+    }
     if (t) headers.Authorization = `Bearer ${t}`;
     // every POST carries the brand id so the shared back end can speak in this brand's voice
     const r = await fetch(API + path, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify({ ...body, brand: B.id }) : undefined });
@@ -75,6 +88,7 @@
   }
   function signOut(reload = true) {
     store.del(LS.token); store.del(LS.user); user = null;
+    try { sessionStorage.removeItem(GUEST_KEY); } catch {}
     if (reload) location.reload();
   }
 
@@ -625,6 +639,7 @@
         <div class="err hidden" id="g-err"></div>
         <button class="btn btn-primary" type="submit">Enter the Studio</button>
         <p class="muted" style="font-size:12px;text-align:center">New accounts start with free credits. Returning? Sign in with the same email.</p>
+        ${guestOn() ? `<button class="btn btn-ghost" type="button" id="g-guest">Just look around</button><p class="muted" style="font-size:11.5px;text-align:center;margin-top:-6px">No passcode needed to look. Creating and chatting need a sign-in.</p>` : ""}
         ${g.note ? `<p class="muted" style="font-size:11.5px;text-align:center">${esc(g.note)}</p>` : ""}
       </div></form>`;
     document.body.appendChild(ov);
@@ -635,17 +650,34 @@
       try {
         const d = await api("/api/login", { name: $("#g-name").value.trim(), email: $("#g-email").value.trim(), passcode: $("#g-pass").value, ref: store.get(LS.ref) });
         store.set(LS.token, d.token); setUser(d.user); ov.remove();
+        // a guest signing in mid-visit: reload so the page loads their own history and credits
+        let wasGuest = false; try { wasGuest = sessionStorage.getItem(GUEST_KEY) === "1"; sessionStorage.removeItem(GUEST_KEY); } catch {}
+        if (wasGuest) { location.reload(); return; }
         document.dispatchEvent(new CustomEvent("bcai:signedin"));
       } catch (err) {
         const ge = $("#g-err"); ge.textContent = err.message; ge.classList.remove("hidden");
         btn.disabled = false; btn.textContent = "Enter the Studio";
       }
     };
+    const gb = $("#g-guest", ov);
+    if (gb) gb.onclick = () => {
+      try { sessionStorage.setItem(GUEST_KEY, "1"); } catch {}
+      ov.remove();
+      document.dispatchEvent(new CustomEvent("bcai:guest"));
+    };
     setTimeout(() => $("#g-name")?.focus(), 50);
   }
-  function whenSignedIn(fn) {
-    if (store.get(LS.token)) { fn(); refreshMe().catch(() => {}); }
-    else { gate(); document.addEventListener("bcai:signedin", fn, { once: true }); }
+  // opts.guest === false: this page needs a real account (e.g. the wallet page), so guests see the sign-in box
+  function whenSignedIn(fn, opts = {}) {
+    const allowGuest = opts.guest !== false;
+    if (store.get(LS.token)) { fn(); refreshMe().catch(() => {}); return; }
+    if (allowGuest && isGuest()) { fn(); return; }
+    let ran = false;
+    const once = () => { if (!ran) { ran = true; fn(); } };
+    gate();
+    document.addEventListener("bcai:signedin", once, { once: true });
+    if (allowGuest) document.addEventListener("bcai:guest", once, { once: true });
+    else document.addEventListener("bcai:guest", () => { location.href = "index.html"; }, { once: true });
   }
 
   // ---------------- the guide: floating helper + concierge chat (BRAND.guide) ----------------

@@ -26,6 +26,8 @@ window.BRAND = {
     intro: "Acme AI Studio is in private preview. Enter the access passcode to start creating.",
     invited: "You were invited by a fellow member. Welcome!", // shown when someone arrives through a referral link
     note: "",                           // optional small print under the sign-in form (e.g. who stores members' data)
+    // guest: false,                    // optional: hide the "Just look around" button (default: shown). Guests browse every
+                                        // page and example without a passcode; creating, chatting with the guide and the wallet need a sign-in
   },
   referral: {
     copied: "Link copied! Share it with your friends",

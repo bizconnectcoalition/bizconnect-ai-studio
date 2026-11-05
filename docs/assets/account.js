@@ -42,5 +42,5 @@
     b.disabled = false;
   }));
 
-  BCAI.whenSignedIn(() => load().catch((e) => console.error(e)));
+  BCAI.whenSignedIn(() => load().catch((e) => console.error(e)), { guest: false }); // wallet needs a real account
 })();
